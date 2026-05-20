@@ -837,6 +837,26 @@
                 </div>
             </div>
 
+            <div class="modal-grid-2" id="mat-symbol-row">
+                <div class="form-group">
+                    <label for="mat-symbol">Equipment Symbol</label>
+                    <select id="mat-symbol">
+                        <option value="circle">● Generic Circle</option>
+                        <option value="wap">◉ Wireless AP (Radio Waves)</option>
+                        <option value="outlet">▣ Data Outlet (RJ45 Jack)</option>
+                        <option value="handhole">▩ Handhole / Manhole</option>
+                        <option value="closure">⊞ Splice Closure / Cabinet</option>
+                        <option value="rack">▥ Equipment Rack</option>
+                        <option value="camera">◎ CCTV / Security Camera</option>
+                        <option value="speaker">◈ Speaker / PA System</option>
+                        <option value="triangle">△ Warning / Marker</option>
+                    </select>
+                </div>
+                <div class="form-group" style="display:flex; align-items:flex-end;">
+                    <canvas id="mat-symbol-preview" width="48" height="48" style="border:1px solid var(--border-subtle); border-radius:var(--radius-md); background:#1e293b;"></canvas>
+                </div>
+            </div>
+
             <div class="modal-grid-2">
                 <div class="form-group">
                     <label for="mat-waste">Waste Modifier (%)</label>
@@ -908,13 +928,13 @@
 
         // Predefined Telecom Materials List
         let materials = [
-            { id: 'mat-1', name: 'Cat 6A UTP Horizontal Cable', type: 'path', color: '#3b82f6', unit: 'm', layer: 'E-TC-CABL-ISP', waste: 10, slack: 3.0, isAerial: false, w: 0.2, T: 500 },
-            { id: 'mat-2', name: 'Backbone Fiber Cable', type: 'path', color: '#ec4899', unit: 'm', layer: 'U-TC-CABL-OSP', waste: 10, slack: 5.0, isAerial: true, w: 0.2, T: 500 },
-            { id: 'mat-3', name: 'OSP Underground Duct', type: 'path', color: '#f97316', unit: 'm', layer: 'U-TC-COND-OSP', waste: 5, slack: 0.0, isAerial: false, w: 0.0, T: 1 },
-            { id: 'mat-4', name: 'Wireless Access Point (AP)', type: 'point', color: '#f59e0b', unit: 'pcs', layer: 'E-TC-EQUP-WAP', waste: 0, slack: 3.0, isAerial: false, w: 0.0, T: 1 },
-            { id: 'mat-5', name: 'Workstation Data Outlet', type: 'point', color: '#10b981', unit: 'pcs', layer: 'E-TC-WALL-OUTL', waste: 0, slack: 3.0, isAerial: false, w: 0.0, T: 1 },
-            { id: 'mat-6', name: 'Splice Vault / Handhole', type: 'point', color: '#6366f1', unit: 'pcs', layer: 'U-TC-EQUP-MHHL', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1 },
-            { id: 'mat-7', name: 'Splice Closure / Cabinet', type: 'point', color: '#a855f7', unit: 'pcs', layer: 'U-TC-EQUP-CLOS', waste: 0, slack: 5.0, isAerial: false, w: 0.0, T: 1 }
+            { id: 'mat-1', name: 'Cat 6A UTP Horizontal Cable', type: 'path', color: '#3b82f6', unit: 'm', layer: 'E-TC-CABL-ISP', waste: 10, slack: 3.0, isAerial: false, w: 0.2, T: 500, symbol: 'circle' },
+            { id: 'mat-2', name: 'Backbone Fiber Cable', type: 'path', color: '#ec4899', unit: 'm', layer: 'U-TC-CABL-OSP', waste: 10, slack: 5.0, isAerial: true, w: 0.2, T: 500, symbol: 'circle' },
+            { id: 'mat-3', name: 'OSP Underground Duct', type: 'path', color: '#f97316', unit: 'm', layer: 'U-TC-COND-OSP', waste: 5, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'circle' },
+            { id: 'mat-4', name: 'Wireless Access Point (AP)', type: 'point', color: '#f59e0b', unit: 'pcs', layer: 'E-TC-EQUP-WAP', waste: 0, slack: 3.0, isAerial: false, w: 0.0, T: 1, symbol: 'wap' },
+            { id: 'mat-5', name: 'Workstation Data Outlet', type: 'point', color: '#10b981', unit: 'pcs', layer: 'E-TC-WALL-OUTL', waste: 0, slack: 3.0, isAerial: false, w: 0.0, T: 1, symbol: 'outlet' },
+            { id: 'mat-6', name: 'Splice Vault / Handhole', type: 'point', color: '#6366f1', unit: 'pcs', layer: 'U-TC-EQUP-MHHL', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'handhole' },
+            { id: 'mat-7', name: 'Splice Closure / Cabinet', type: 'point', color: '#a855f7', unit: 'pcs', layer: 'U-TC-EQUP-CLOS', waste: 0, slack: 5.0, isAerial: false, w: 0.0, T: 1, symbol: 'closure' }
         ];
 
         // Annotation/Measurement elements
@@ -975,12 +995,14 @@
                 document.getElementById('mat-layer').value = '';
                 document.getElementById('mat-type').value = 'path';
                 document.getElementById('mat-color').value = '#8b5cf6';
+                document.getElementById('mat-symbol').value = 'circle';
                 document.getElementById('mat-waste').value = '0';
                 document.getElementById('mat-slack').value = '0';
                 document.getElementById('mat-aerial').checked = false;
                 document.getElementById('mat-weight').value = '0.2';
                 document.getElementById('mat-tension').value = '500';
                 updateModalFieldVisibilities();
+                updateSymbolPreview();
                 showModal(matModal);
             });
             document.getElementById('mat-cancel').addEventListener('click', () => hideModal(matModal));
@@ -990,6 +1012,8 @@
             document.getElementById('mat-preset').addEventListener('change', handlePresetChange);
             document.getElementById('mat-type').addEventListener('change', updateModalFieldVisibilities);
             document.getElementById('mat-aerial').addEventListener('change', updateModalFieldVisibilities);
+            document.getElementById('mat-symbol').addEventListener('change', updateSymbolPreview);
+            document.getElementById('mat-color').addEventListener('input', updateSymbolPreview);
 
             // Hook Calibration switches
             calMethodSelect.addEventListener('change', toggleCalMethod);
@@ -1987,13 +2011,13 @@ EOF`;
         }
 
         const ASSET_PRESETS = {
-            'custom': { name: '', type: 'path', color: '#8b5cf6', layer: '', waste: 0, slack: 0, isAerial: false, w: 0.2, T: 500 },
-            'backbone-fiber': { name: 'Backbone Fiber Cable', type: 'path', color: '#ec4899', layer: 'U-TC-CABL-OSP', waste: 10, slack: 5.0, isAerial: true, w: 0.2, T: 500 },
-            'osp-duct': { name: 'OSP Underground Duct', type: 'path', color: '#f97316', layer: 'U-TC-COND-OSP', waste: 5, slack: 0.0, isAerial: false, w: 0.0, T: 1 },
-            'handhole': { name: 'Splice Vault / Handhole', type: 'point', color: '#6366f1', layer: 'U-TC-EQUP-MHHL', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1 },
-            'closure': { name: 'Splice Closure / Cabinet', type: 'point', color: '#a855f7', layer: 'U-TC-EQUP-CLOS', waste: 0, slack: 5.0, isAerial: false, w: 0.0, T: 1 },
-            'wap': { name: 'Wireless Access Point (AP)', type: 'point', color: '#f59e0b', layer: 'E-TC-EQUP-WAP', waste: 0, slack: 3.0, isAerial: false, w: 0.0, T: 1 },
-            'outlet': { name: 'Workstation Data Outlet', type: 'point', color: '#10b981', layer: 'E-TC-WALL-OUTL', waste: 0, slack: 3.0, isAerial: false, w: 0.0, T: 1 }
+            'custom': { name: '', type: 'path', color: '#8b5cf6', layer: '', waste: 0, slack: 0, isAerial: false, w: 0.2, T: 500, symbol: 'circle' },
+            'backbone-fiber': { name: 'Backbone Fiber Cable', type: 'path', color: '#ec4899', layer: 'U-TC-CABL-OSP', waste: 10, slack: 5.0, isAerial: true, w: 0.2, T: 500, symbol: 'circle' },
+            'osp-duct': { name: 'OSP Underground Duct', type: 'path', color: '#f97316', layer: 'U-TC-COND-OSP', waste: 5, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'circle' },
+            'handhole': { name: 'Splice Vault / Handhole', type: 'point', color: '#6366f1', layer: 'U-TC-EQUP-MHHL', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'handhole' },
+            'closure': { name: 'Splice Closure / Cabinet', type: 'point', color: '#a855f7', layer: 'U-TC-EQUP-CLOS', waste: 0, slack: 5.0, isAerial: false, w: 0.0, T: 1, symbol: 'closure' },
+            'wap': { name: 'Wireless Access Point (AP)', type: 'point', color: '#f59e0b', layer: 'E-TC-EQUP-WAP', waste: 0, slack: 3.0, isAerial: false, w: 0.0, T: 1, symbol: 'wap' },
+            'outlet': { name: 'Workstation Data Outlet', type: 'point', color: '#10b981', layer: 'E-TC-WALL-OUTL', waste: 0, slack: 3.0, isAerial: false, w: 0.0, T: 1, symbol: 'outlet' }
         };
 
         function handlePresetChange(e) {
@@ -2006,6 +2030,7 @@ EOF`;
                 document.getElementById('mat-layer').value = preset.layer;
                 document.getElementById('mat-type').value = preset.type;
                 document.getElementById('mat-color').value = preset.color;
+                document.getElementById('mat-symbol').value = preset.symbol || 'circle';
                 document.getElementById('mat-waste').value = preset.waste;
                 document.getElementById('mat-slack').value = preset.slack;
                 document.getElementById('mat-aerial').checked = preset.isAerial;
@@ -2013,6 +2038,7 @@ EOF`;
                 document.getElementById('mat-tension').value = preset.T;
             }
             updateModalFieldVisibilities();
+            updateSymbolPreview();
         }
 
         function updateModalFieldVisibilities() {
@@ -2021,7 +2047,11 @@ EOF`;
             
             const aerialToggleContainer = document.getElementById('mat-aerial-toggle-container');
             const aerialFields = document.getElementById('mat-aerial-fields');
+            const symbolRow = document.getElementById('mat-symbol-row');
             
+            // Symbol row only shown for point/counter materials
+            symbolRow.style.display = (style === 'point') ? 'grid' : 'none';
+
             if (style === 'point') {
                 aerialToggleContainer.style.display = 'none';
                 aerialFields.style.display = 'none';
@@ -2112,10 +2142,11 @@ EOF`;
                 }
 
                 const layerBadge = m.layer ? `<div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;"><i class="fa-solid fa-layer-group"></i> ${m.layer}</div>` : '';
+                const symbolCanvasId = `sym-preview-${m.id}`;
 
                 item.innerHTML = `
                     <div class="material-meta" style="flex:1;">
-                        <div class="material-color-dot" style="background-color: ${m.color}"></div>
+                        <canvas id="${symbolCanvasId}" width="28" height="28" style="flex-shrink:0; border-radius:4px;"></canvas>
                         <div style="flex:1; min-width:0;">
                             <div class="material-name" style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap;" title="${m.name}">${m.name}</div>
                             ${layerBadge}
@@ -2139,6 +2170,31 @@ EOF`;
                 });
 
                 materialListContainer.appendChild(item);
+
+                // Draw symbol on mini canvas after it's in the DOM
+                const symCanvas = document.getElementById(symbolCanvasId);
+                if (symCanvas) {
+                    const sctx = symCanvas.getContext('2d');
+                    if (m.type === 'point') {
+                        drawEquipmentSymbol(sctx, 14, 14, m.symbol || 'circle', m.color, 16);
+                    } else {
+                        // For linear materials, draw a colored line segment
+                        sctx.strokeStyle = m.color;
+                        sctx.lineWidth = 3;
+                        sctx.beginPath();
+                        sctx.moveTo(4, 20);
+                        sctx.lineTo(14, 8);
+                        sctx.lineTo(24, 20);
+                        sctx.stroke();
+                        sctx.fillStyle = '#ffffff';
+                        [4, 14, 24].forEach((px, i) => {
+                            const py = i === 1 ? 8 : 20;
+                            sctx.beginPath();
+                            sctx.arc(px, py, 2.5, 0, Math.PI * 2);
+                            sctx.fill();
+                        });
+                    }
+                }
             });
         }
 
@@ -2146,6 +2202,7 @@ EOF`;
             const name = document.getElementById('mat-name').value.trim();
             const type = document.getElementById('mat-type').value;
             const color = document.getElementById('mat-color').value;
+            const symbol = document.getElementById('mat-symbol').value || 'circle';
             const layer = document.getElementById('mat-layer').value.trim();
             const waste = parseFloat(document.getElementById('mat-waste').value) || 0;
             const slack = parseFloat(document.getElementById('mat-slack').value) || 0;
@@ -2160,7 +2217,7 @@ EOF`;
 
             const id = 'mat-' + Date.now();
             const unit = type === 'path' ? calibration.unit : 'pcs';
-            materials.push({ id, name, type, color, unit, layer, waste, slack, isAerial, w, T });
+            materials.push({ id, name, type, color, unit, layer, waste, slack, isAerial, w, T, symbol });
             activeMaterialId = id;
 
             hideModal(matModal);
@@ -2443,6 +2500,259 @@ EOF`;
             return { x, y };
         }
 
+        // --- EQUIPMENT SYMBOL RENDERING ENGINE ---
+        function drawEquipmentSymbol(ctx, x, y, symbol, color, size) {
+            const s = size || 14;
+            ctx.save();
+            ctx.translate(x, y);
+
+            switch (symbol) {
+                case 'wap': // Wireless Access Point — circle with radio wave arcs
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, s * 0.45, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    // Radio wave arcs
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 1.8;
+                    ctx.setLineDash([]);
+                    for (let i = 1; i <= 3; i++) {
+                        ctx.beginPath();
+                        ctx.arc(0, 0, s * 0.45 + i * (s * 0.22), -Math.PI * 0.4, Math.PI * 0.4);
+                        ctx.stroke();
+                    }
+                    // Antenna dot
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, s * 0.15, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                case 'outlet': { // Data Outlet — rectangle with RJ45 jack symbol
+                    ctx.fillStyle = color;
+                    ctx.fillRect(-s * 0.5, -s * 0.5, s, s);
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeRect(-s * 0.5, -s * 0.5, s, s);
+                    // RJ45 inner rectangle
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(-s * 0.25, -s * 0.3, s * 0.5, s * 0.35);
+                    // Contact pins
+                    ctx.fillStyle = color;
+                    const pins = 4;
+                    const pinW = s * 0.08;
+                    const pinGap = s * 0.5 / (pins + 1);
+                    for (let i = 1; i <= pins; i++) {
+                        ctx.fillRect(-s * 0.25 + i * pinGap - pinW / 2, -s * 0.25, pinW, s * 0.2);
+                    }
+                    // Cable tail
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(0, s * 0.05);
+                    ctx.lineTo(0, s * 0.55);
+                    ctx.stroke();
+                    break;
+                }
+
+                case 'handhole': { // Handhole / Manhole — octagon with cross
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    const oct = s * 0.55;
+                    const cut = oct * 0.38;
+                    ctx.moveTo(-oct + cut, -oct);
+                    ctx.lineTo(oct - cut, -oct);
+                    ctx.lineTo(oct, -oct + cut);
+                    ctx.lineTo(oct, oct - cut);
+                    ctx.lineTo(oct - cut, oct);
+                    ctx.lineTo(-oct + cut, oct);
+                    ctx.lineTo(-oct, oct - cut);
+                    ctx.lineTo(-oct, -oct + cut);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    // Cross inside
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(-s * 0.25, -s * 0.25);
+                    ctx.lineTo(s * 0.25, s * 0.25);
+                    ctx.moveTo(s * 0.25, -s * 0.25);
+                    ctx.lineTo(-s * 0.25, s * 0.25);
+                    ctx.stroke();
+                    break;
+                }
+
+                case 'closure': { // Splice Closure — rounded rect with splice lines
+                    const rw = s * 0.7, rh = s * 0.45, rr = s * 0.1;
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(-rw + rr, -rh);
+                    ctx.arcTo(rw, -rh, rw, rh, rr);
+                    ctx.arcTo(rw, rh, -rw, rh, rr);
+                    ctx.arcTo(-rw, rh, -rw, -rh, rr);
+                    ctx.arcTo(-rw, -rh, rw, -rh, rr);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    // Internal splice lines
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(-rw * 0.5, 0);
+                    ctx.lineTo(rw * 0.5, 0);
+                    ctx.moveTo(0, -rh * 0.6);
+                    ctx.lineTo(0, rh * 0.6);
+                    ctx.stroke();
+                    // Entry/exit pipes
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(-rw - s * 0.2, 0);
+                    ctx.lineTo(-rw, 0);
+                    ctx.moveTo(rw, 0);
+                    ctx.lineTo(rw + s * 0.2, 0);
+                    ctx.stroke();
+                    break;
+                }
+
+                case 'rack': // Equipment Rack — tall rectangle with shelves
+                    ctx.fillStyle = color;
+                    ctx.fillRect(-s * 0.35, -s * 0.6, s * 0.7, s * 1.2);
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeRect(-s * 0.35, -s * 0.6, s * 0.7, s * 1.2);
+                    // Rack unit shelves
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1;
+                    for (let i = 1; i <= 3; i++) {
+                        const yy = -s * 0.6 + i * (s * 1.2 / 4);
+                        ctx.beginPath();
+                        ctx.moveTo(-s * 0.3, yy);
+                        ctx.lineTo(s * 0.3, yy);
+                        ctx.stroke();
+                    }
+                    // LED dots
+                    ctx.fillStyle = '#10b981';
+                    for (let i = 1; i <= 3; i++) {
+                        const yy = -s * 0.6 + i * (s * 1.2 / 4) - s * 0.12;
+                        ctx.beginPath();
+                        ctx.arc(s * 0.18, yy, s * 0.05, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    break;
+
+                case 'camera': // CCTV — lens body with mount arm
+                    // Mount arm
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -s * 0.5);
+                    ctx.lineTo(0, -s * 0.15);
+                    ctx.stroke();
+                    // Camera body (trapezoid lens)
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(-s * 0.45, -s * 0.15);
+                    ctx.lineTo(s * 0.45, -s * 0.15);
+                    ctx.lineTo(s * 0.3, s * 0.35);
+                    ctx.lineTo(-s * 0.3, s * 0.35);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    // Lens circle
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(0, s * 0.08, s * 0.15, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(0, s * 0.08, s * 0.08, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                case 'speaker': // PA Speaker — diamond with inner circle
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -s * 0.55);
+                    ctx.lineTo(s * 0.55, 0);
+                    ctx.lineTo(0, s * 0.55);
+                    ctx.lineTo(-s * 0.55, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    // Inner circle (speaker cone)
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, s * 0.22, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, s * 0.08, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                case 'triangle': // Warning / Generic Triangle Marker
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -s * 0.55);
+                    ctx.lineTo(s * 0.55, s * 0.4);
+                    ctx.lineTo(-s * 0.55, s * 0.4);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    // Exclamation
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = `bold ${Math.round(s * 0.5)}px Inter`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('!', 0, s * 0.08);
+                    break;
+
+                case 'circle': // Generic Circle (default)
+                default:
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, s * 0.45, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    // Outer glow ring
+                    ctx.beginPath();
+                    ctx.arc(0, 0, s * 0.75, 0, Math.PI * 2);
+                    ctx.strokeStyle = color + '44';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    break;
+            }
+
+            ctx.restore();
+        }
+
+        function updateSymbolPreview() {
+            const previewCanvas = document.getElementById('mat-symbol-preview');
+            if (!previewCanvas) return;
+            const pctx = previewCanvas.getContext('2d');
+            const sym = document.getElementById('mat-symbol').value;
+            const col = document.getElementById('mat-color').value;
+            pctx.clearRect(0, 0, 48, 48);
+            drawEquipmentSymbol(pctx, 24, 24, sym, col, 28);
+        }
+
         // --- DRAW LAYER REDRAWING ---
         function redrawFG() {
             ctxFg.clearRect(0, 0, canvasFg.width, canvasFg.height);
@@ -2471,18 +2781,8 @@ EOF`;
 
                 if (item.type === 'point') {
                     const p = item.points[0];
-                    ctxFg.beginPath();
-                    ctxFg.arc(p.x, p.y, 8, 0, 2 * Math.PI);
-                    ctxFg.fill();
-                    ctxFg.strokeStyle = '#ffffff';
-                    ctxFg.lineWidth = 2;
-                    ctxFg.stroke();
-                    
-                    ctxFg.beginPath();
-                    ctxFg.arc(p.x, p.y, 14, 0, 2 * Math.PI);
-                    ctxFg.strokeStyle = material.color + '44';
-                    ctxFg.lineWidth = 1.5;
-                    ctxFg.stroke();
+                    const sym = material.symbol || 'circle';
+                    drawEquipmentSymbol(ctxFg, p.x, p.y, sym, material.color, 18);
                 } else if (item.type === 'path') {
                     ctxFg.beginPath();
                     ctxFg.moveTo(item.points[0].x, item.points[0].y);
