@@ -1,0 +1,3330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity - Telecom Material Takeoff Tool</title>
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            /* Design System / Color Tokens */
+            --bg-base: #0b0f19;
+            --bg-surface: #131b2e;
+            --bg-surface-elevated: #1e293b;
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.16);
+            
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            
+            --color-primary: #8b5cf6; /* Violet */
+            --color-primary-glow: rgba(139, 92, 246, 0.15);
+            --color-success: #10b981; /* Emerald */
+            --color-accent: #f59e0b; /* Amber */
+            --color-danger: #ef4444; /* Rose */
+            
+            --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+            --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+        }
+
+        /* Basic Resets & Scrollbars */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-base);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-surface-elevated);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Layout Structure */
+        header {
+            background-color: var(--bg-surface);
+            border-bottom: 1px solid var(--border-subtle);
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            z-index: 10;
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-icon {
+            background: linear-gradient(135deg, var(--color-primary), #a78bfa);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+            box-shadow: 0 0 15px var(--color-primary-glow);
+        }
+        .logo-text {
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #ffffff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .app-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Sidebar Panels */
+        .sidebar {
+            width: 360px;
+            background-color: var(--bg-surface);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            z-index: 5;
+        }
+        .sidebar-section {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .sidebar-section-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Workspace Canvas Area */
+        .workspace {
+            flex: 1;
+            background-color: var(--bg-base);
+            position: relative;
+            overflow: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            outline: none;
+        }
+        .canvas-outer {
+            position: relative;
+            transform-origin: top left;
+            margin: auto;
+            box-shadow: var(--shadow-lg);
+            background-color: #ffffff;
+            transition: transform 0.05s ease-out;
+        }
+        .canvas-layer {
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        #canvas-bg {
+            z-index: 1;
+        }
+        #canvas-fg {
+            z-index: 2;
+            cursor: crosshair;
+        }
+
+        /* Mode & Drawing Controls */
+        .toolbar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 8;
+            background: rgba(19, 27, 46, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 6px;
+            display: flex;
+            gap: 4px;
+            box-shadow: var(--shadow-lg);
+        }
+        .tool-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            font-size: 1.1rem;
+            position: relative;
+        }
+        .tool-btn:hover {
+            background-color: var(--bg-surface-elevated);
+            color: var(--text-primary);
+        }
+        .tool-btn.active {
+            background-color: var(--color-primary);
+            color: white;
+            box-shadow: 0 0 10px var(--color-primary-glow);
+        }
+        .tool-btn.toggle-on {
+            background-color: rgba(16, 185, 129, 0.18);
+            color: var(--color-success);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+        .tool-btn.toggle-off {
+            background-color: rgba(100, 116, 139, 0.12);
+            color: var(--text-muted);
+            border: 1px solid var(--border-subtle);
+        }
+        .tool-btn[tooltip]::after {
+            content: attr(tooltip);
+            position: absolute;
+            bottom: -32px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--bg-surface-elevated);
+            color: var(--text-primary);
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease;
+            z-index: 20;
+            border: 1px solid var(--border-subtle);
+        }
+        .tool-btn[tooltip]:hover::after {
+            opacity: 1;
+        }
+
+        /* View Controls */
+        .view-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 8;
+            background: rgba(19, 27, 46, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Help Info Floating Banner */
+        .help-banner {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 8;
+            background: rgba(19, 27, 46, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--color-primary);
+            border-radius: var(--radius-md);
+            padding: 10px 20px;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            box-shadow: var(--shadow-lg);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition-smooth);
+        }
+
+        /* Buttons & Forms */
+        .btn {
+            background-color: var(--bg-surface-elevated);
+            color: var(--text-primary);
+            border: 1px solid var(--border-subtle);
+            padding: 10px 16px;
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+        .btn:hover {
+            border-color: var(--border-hover);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--color-primary), #7c3aed);
+            border: none;
+            color: white;
+        }
+        .btn-primary:hover {
+            opacity: 0.9;
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+        }
+        .btn-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--color-danger);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        .btn-danger:hover {
+            background-color: var(--color-danger);
+            color: white;
+        }
+        
+        .file-upload-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+        .file-upload-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* Material List Item Styles */
+        .material-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-bottom: 12px;
+        }
+        .material-item {
+            background-color: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+        .material-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: var(--border-hover);
+        }
+        .material-item.selected {
+            border-color: var(--color-primary);
+            background-color: var(--color-primary-glow);
+        }
+        .material-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .material-color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .material-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        .material-type-tag {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background-color: var(--bg-surface-elevated);
+            color: var(--text-secondary);
+        }
+        .material-delete-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            padding: 4px;
+        }
+        .material-delete-btn:hover {
+            color: var(--color-danger);
+        }
+
+        /* Calibration Details Panel */
+        .calibration-status {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(245, 158, 11, 0.02));
+            border: 1px dashed rgba(245, 158, 11, 0.3);
+            border-radius: var(--radius-lg);
+            padding: 12px 16px;
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .calibration-status span {
+            font-size: 0.85rem;
+        }
+        .calibration-status strong {
+            color: var(--color-accent);
+        }
+
+        /* Bottom Takeoff Summary Table */
+        .bottom-panel {
+            background-color: var(--bg-surface);
+            border-top: 1px solid var(--border-subtle);
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 6;
+        }
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            background-color: rgba(255, 255, 255, 0.01);
+        }
+        tr:hover td {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Custom Form Controls */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        input, select {
+            background-color: var(--bg-surface-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 8px 12px;
+            color: var(--text-primary);
+            font-family: inherit;
+            outline: none;
+            transition: var(--transition-smooth);
+        }
+        input:focus, select:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px var(--color-primary-glow);
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            width: 400px;
+            padding: 24px;
+            box-shadow: var(--shadow-lg);
+            transform: scale(0.9);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+        .modal-header {
+            margin-bottom: 16px;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        /* Page Navigation Indicator */
+        .page-navigation {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 8;
+            background: rgba(19, 27, 46, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-lg);
+        }
+        .page-nav-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: var(--transition-smooth);
+        }
+        .page-nav-btn:hover {
+            background-color: var(--bg-surface-elevated);
+        }
+        .page-nav-btn:disabled {
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        /* Drop Zone */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 40px;
+            text-align: center;
+            border: 2px dashed var(--border-subtle);
+            border-radius: var(--radius-xl);
+            margin: 20px;
+            color: var(--text-secondary);
+        }
+        .empty-state-icon {
+            font-size: 3rem;
+            color: var(--color-primary);
+            margin-bottom: 16px;
+            opacity: 0.7;
+        }
+        .modal-wide {
+            width: 520px;
+        }
+        .modal-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">AG</div>
+            <span class="logo-text">Antigravity Telecom MTO</span>
+        </div>
+        <div>
+            <span id="file-info" style="font-size: 0.9rem; color: var(--text-secondary);">No layout loaded</span>
+        </div>
+    </header>
+
+    <div class="app-container">
+        
+        <!-- Sidebar Controls -->
+        <aside class="sidebar">
+            
+            <!-- Project / File Management -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Drawing Source</div>
+                <div class="file-upload-wrapper" style="margin-bottom: 8px;">
+                    <button class="btn btn-primary"><i class="fa-solid fa-file-pdf"></i> Load PDF, Image or DXF</button>
+                    <input type="file" id="file-input" accept="application/pdf, image/*, .dxf">
+                </div>
+                <button class="btn" id="btn-load-sample-dxf"><i class="fa-solid fa-wand-magic-sparkles"></i> Load Sample DXF CAD</button>
+            </div>
+
+            <!-- Calibration System -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Calibration (Scaling)</div>
+                
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="cal-method-select">Choose Calibration Method:</label>
+                    <select id="cal-method-select">
+                        <option value="ratio">Drawing Scale Ratio (e.g. 1:300)</option>
+                        <option value="line">Draw Reference Line</option>
+                    </select>
+                </div>
+
+                <!-- Method 1: Drawing Scale Ratio -->
+                <div id="cal-method-ratio">
+                    <div style="display: flex; gap: 8px; align-items: flex-end; margin-bottom: 8px;">
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <label for="cal-ratio-input">Ratio 1 :</label>
+                            <input type="number" id="cal-ratio-input" value="300" min="1" placeholder="e.g. 300">
+                        </div>
+                        <div class="form-group" style="width: 105px; margin-bottom: 0;">
+                            <label for="cal-ratio-unit">Unit</label>
+                            <select id="cal-ratio-unit">
+                                <option value="m">Meters (m)</option>
+                                <option value="ft">Feet (ft)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="btn-apply-ratio-cal" style="margin-top: 10px;"><i class="fa-solid fa-check"></i> Apply Scale Ratio</button>
+                    <p id="ratio-img-warning" style="font-size: 0.75rem; color: var(--color-accent); margin-top: 8px; display: none; line-height: 1.3;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Scale ratio calibration works perfectly with vector PDF plans. For images, drawing a reference line is recommended.
+                    </p>
+                </div>
+
+                <!-- Method 2: Draw Reference Line -->
+                <div id="cal-method-line" style="display: none;">
+                    <button class="btn" id="btn-calibrate"><i class="fa-solid fa-ruler-combined"></i> Draw Reference Line</button>
+                </div>
+
+                <div class="calibration-status" id="calibration-info" style="margin-top: 14px;">
+                    <span>Status: <strong style="color: var(--color-danger)">Not Calibrated</strong></span>
+                    <span>Scale: 1 px = --</span>
+                </div>
+            </div>
+
+            <!-- CAD Layers List Manager (Only visible for DXF CAD layouts) -->
+            <div class="sidebar-section" id="cad-layers-section" style="display: none;">
+                <div class="sidebar-section-title">CAD Layers</div>
+                <div id="cad-layers-list" style="display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto;">
+                    <!-- Layers checkbox items inject here -->
+                </div>
+            </div>
+
+            <!-- CAD Block Auto-Count Panel (Only visible for DXF CAD layouts) -->
+            <div class="sidebar-section" id="cad-blocks-section" style="display: none;">
+                <div class="sidebar-section-title">Auto-Count CAD Blocks</div>
+                <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 10px; line-height: 1.3;">
+                    Match drawing symbols directly to material categories for instant, automated counting.
+                </p>
+                <div id="cad-blocks-list" style="display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Blocks matching items inject here -->
+                </div>
+            </div>
+			
+			<!-- Editing Tools -->
+			<div class="sidebar-section">
+				<div class="sidebar-section-title">Edit Tools</div>
+
+				<button class="btn" onclick="setMode('delete')">
+					<i class="fa-solid fa-eraser"></i>
+					Delete Symbol / Run
+				</button>
+
+				<button class="btn" onclick="toggleSnapMode()" style="margin-top:8px;">
+					<i class="fa-solid fa-magnet"></i>
+					Toggle Snap (Linear)
+				</button>
+
+				<p style="font-size:0.75rem; color:var(--text-muted); margin-top:8px; line-height:1.3;">
+					Delete removes placed counters or linear runs and updates the MTO instantly.
+					Snap affects only linear run drawing.
+				</p>
+			</div>
+			
+			<!-- Material Configuration -->
+			<div class="sidebar-section">
+				<div class="sidebar-section-title">Material Configuration</div>
+
+				<button class="btn" onclick="exportMaterialConfig()">
+					<i class="fa-solid fa-file-export"></i>
+					Export Material Config (JSON)
+				</button>
+
+				<div class="file-upload-wrapper" style="margin-top:8px;">
+					<button class="btn">
+						<i class="fa-solid fa-file-import"></i>
+						Import Material Config
+					</button>
+					<input type="file" accept=".json" onchange="importMaterialConfig(event)">
+				</div>
+
+				<p style="font-size:0.75rem;color:var(--text-muted);margin-top:8px;line-height:1.3;">
+					Import/export reusable material & symbol definitions so standards stay consistent across projects.
+				</p>
+			</div>
+			
+            <!-- Material Types Definition -->
+            <div class="sidebar-section" style="flex: 1; display: flex; flex-direction: column;">
+                <div class="sidebar-section-title">
+                    <span>Material Palette</span>
+                    <button id="btn-add-material" style="background:none; border:none; color:var(--color-primary); cursor:pointer;"><i class="fa-solid fa-plus-circle"></i> Add</button>
+                </div>
+                
+                <div class="material-list" id="material-list">
+                    <!-- Dynamic material entries go here -->
+                </div>
+                <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-top: auto;">Select a material type above, choose "Counter" or "Linear" mode from toolbar, then click on drawing.</span>
+            </div>
+
+        </aside>
+
+        <!-- Main Workspace Area -->
+        <main class="workspace" id="workspace">
+            
+            <div class="empty-state" id="empty-state">
+                <div class="empty-state-icon"><i class="fa-solid fa-folder-open"></i></div>
+                <h3>Welcome to Antigravity Takeoff</h3>
+                <p style="margin: 8px 0 20px; font-size: 0.9rem; max-width: 400px;">Load a PDF floor plan, CAD DXF sheet, or layout image to calibrate scales and measure cables.</p>
+                <div style="display: flex; flex-direction: column; gap: 10px; width: 220px; margin: 0 auto;">
+                    <div class="file-upload-wrapper" style="width: auto;">
+                        <button class="btn btn-primary"><i class="fa-solid fa-plus"></i> Select File</button>
+                        <input type="file" id="file-input-empty" accept="application/pdf, image/*, .dxf">
+                    </div>
+                    <button class="btn" id="btn-load-sample-dxf-empty"><i class="fa-solid fa-wand-magic-sparkles"></i> Load Sample DXF</button>
+                </div>
+            </div>
+
+            <!-- Interactive Drawing Area -->
+            <div class="canvas-outer" id="canvas-outer" style="display: none;">
+                <canvas id="canvas-bg" class="canvas-layer"></canvas>
+                <canvas id="canvas-fg" class="canvas-layer"></canvas>
+            </div>
+
+            <!-- Draw Tool floating overlay -->
+            <div class="toolbar" id="toolbar" style="display: none;">
+                <button class="tool-btn active" id="tool-pan" tooltip="Pan & Zoom Mode"><i class="fa-solid fa-hand"></i></button>
+                <button class="tool-btn" id="tool-point" tooltip="Count Placer"><i class="fa-solid fa-location-dot"></i></button>
+                <button class="tool-btn" id="tool-path" tooltip="Linear Measurement"><i class="fa-solid fa-route"></i></button>
+                <button class="tool-btn" id="tool-delete" tooltip="Delete Placed Symbol/Run"><i class="fa-solid fa-eraser"></i></button>
+                <button class="tool-btn toggle-on" id="tool-snap" tooltip="Object Snap: ON/OFF"><i class="fa-solid fa-magnet"></i></button>
+            </div>
+
+            <!-- Zoom Floating Controls -->
+            <div class="view-controls" id="view-controls" style="display: none;">
+                <button class="tool-btn" id="zoom-in" tooltip="Zoom In"><i class="fa-solid fa-plus"></i></button>
+                <button class="tool-btn" id="zoom-out" tooltip="Zoom Out"><i class="fa-solid fa-minus"></i></button>
+                <button class="tool-btn" id="zoom-fit" tooltip="Fit to Screen"><i class="fa-solid fa-expand"></i></button>
+            </div>
+
+            <!-- Contextual Help Floating Banner -->
+            <div class="help-banner" id="help-banner" style="display: none;">
+                <i class="fa-solid fa-info-circle"></i>
+                <span id="help-banner-text">Loading drawing workspace...</span>
+            </div>
+
+            <!-- Multi-page PDF Controls -->
+            <div class="page-navigation" id="page-navigation" style="display: none;">
+                <button class="page-nav-btn" id="prev-page" disabled><i class="fa-solid fa-chevron-left"></i></button>
+                <span id="page-num-display" style="font-size: 0.9rem; font-weight: 500;">Page 1 of 1</span>
+                <button class="page-nav-btn" id="next-page" disabled><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- Takeoff Output spreadsheet panel -->
+    <div class="bottom-panel" id="bottom-panel" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h3 style="font-family: 'Outfit'; font-weight: 600; font-size: 1.1rem; color: var(--text-primary);">Material Takeoff Sheet (MTO)</h3>
+            <button class="btn btn-primary" id="btn-export" style="width: auto; padding: 6px 16px;"><i class="fa-solid fa-file-excel"></i> Export Takeoff to CSV</button>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Material Item (Layer)</th>
+                        <th>Type</th>
+                        <th>Color</th>
+                        <th>Measured (Raw)</th>
+                        <th>Waste & Sag Modifiers</th>
+                        <th>Total Takeoff</th>
+                        <th>Unit</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="takeoff-table-body">
+                    <!-- Dynamic takeoff summaries -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modals -->
+
+    <!-- Calibration Input Modal -->
+    <div class="modal-overlay" id="calibration-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <i class="fa-solid fa-ruler-combined" style="color: var(--color-accent);"></i>
+                <h3>Set Scale Calibration</h3>
+            </div>
+            <div class="form-group">
+                <label for="cal-length">Enter Physical Distance represented by drawn line</label>
+                <input type="number" id="cal-length" placeholder="e.g. 10" step="any" min="0.01">
+            </div>
+            <div class="form-group">
+                <label for="cal-unit">Unit of Measurement</label>
+                <select id="cal-unit">
+                    <option value="m">Meters (m)</option>
+                    <option value="ft">Feet (ft)</option>
+                    <option value="in">Inches (in)</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="cal-cancel">Cancel</button>
+                <button class="btn btn-primary" id="cal-submit">Apply Scale</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Material Add Modal -->
+    <div class="modal-overlay" id="material-modal">
+        <div class="modal modal-wide">
+            <div class="modal-header">
+                <i class="fa-solid fa-tag" style="color: var(--color-primary);"></i>
+                <h3>Add New Material Type</h3>
+            </div>
+            
+            <div class="form-group">
+                <label for="mat-preset">Preset Templates (TIA/EIA / NECA Standards)</label>
+                <select id="mat-preset">
+                    <option value="custom">-- Custom Asset (No Preset) --</option>
+                    <option value="backbone-fiber">Backbone Fiber Cable (U-TC-CABL-OSP) - 10% Waste, 5m Slack</option>
+                    <option value="osp-duct">OSP Underground Duct (U-TC-COND-OSP) - 5% Waste</option>
+                    <option value="handhole">Splice Vault / Handhole (U-TC-EQUP-MHHL)</option>
+                    <option value="closure">Splice Closure / Cabinet (U-TC-EQUP-CLOS) - 5m Slack</option>
+                    <option value="wap">Wireless Access Point (E-TC-EQUP-WAP) - 3m Pull</option>
+                    <option value="outlet">Workstation Data Outlet (E-TC-WALL-OUTL) - 3m Pull</option>
+                </select>
+            </div>
+
+            <div class="modal-grid-2">
+                <div class="form-group">
+                    <label for="mat-name">Material Name</label>
+                    <input type="text" id="mat-name" placeholder="e.g., Cat 6A UTP Cable">
+                </div>
+                <div class="form-group">
+                    <label for="mat-layer">AIA/TIA CAD Layer Name</label>
+                    <input type="text" id="mat-layer" placeholder="e.g. U-TC-CABL-OSP">
+                </div>
+            </div>
+
+            <div class="modal-grid-2">
+                <div class="form-group">
+                    <label for="mat-type">Takeoff Style</label>
+                    <select id="mat-type">
+                        <option value="path">Linear Run (e.g. Cables, Conduits)</option>
+                        <option value="point">Counter Marker (e.g. Outlets, APs)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="mat-color">Marker Color</label>
+                    <input type="color" id="mat-color" value="#8b5cf6" style="height: 38px; padding: 2px; cursor: pointer;">
+                </div>
+            </div>
+
+            <div class="modal-grid-2" id="mat-symbol-row">
+                <div class="form-group">
+                    <label for="mat-symbol">Equipment Symbol</label>
+                    <select id="mat-symbol">
+                        <option value="circle">● Generic Circle</option>
+                        <option value="wap">◉ Wireless AP (Radio Waves)</option>
+                        <option value="outlet">▣ Data Outlet (RJ45 Jack)</option>
+                        <option value="handhole">▩ Handhole / Manhole</option>
+                        <option value="closure">⊞ Splice Closure / Cabinet</option>
+                        <option value="rack">▥ Equipment Rack</option>
+                        <option value="camera">◎ CCTV / Security Camera</option>
+                        <option value="speaker">◈ Speaker / PA System</option>
+                        <option value="triangle">△ Warning / Marker</option>
+                    </select>
+                </div>
+                <div class="form-group" style="display:flex; align-items:flex-end;">
+                    <canvas id="mat-symbol-preview" width="48" height="48" style="border:1px solid var(--border-subtle); border-radius:var(--radius-md); background:#1e293b;"></canvas>
+                </div>
+            </div>
+
+            <div class="modal-grid-2">
+                <div class="form-group">
+                    <label for="mat-waste">Waste Modifier (%)</label>
+                    <input type="number" id="mat-waste" value="0" min="0" max="100" step="any">
+                </div>
+                <div class="form-group">
+                    <label for="mat-slack">Service Loop Slack (m/ft)</label>
+                    <input type="number" id="mat-slack" value="0" min="0" step="any">
+                </div>
+            </div>
+
+            <div class="form-group" id="mat-aerial-toggle-container" style="flex-direction: row; gap: 8px; align-items: center; margin-bottom: 12px;">
+                <input type="checkbox" id="mat-aerial" style="width: auto; margin: 0; cursor: pointer;">
+                <label for="mat-aerial" style="cursor: pointer; font-size: 0.85rem; color: var(--text-primary); margin-bottom:0;">Aerial Run (Tension & Sag Deflection)</label>
+            </div>
+
+            <div class="modal-grid-2" id="mat-aerial-fields" style="display: none;">
+                <div class="form-group">
+                    <label for="mat-weight">Cable Weight (kg/m or lb/ft)</label>
+                    <input type="number" id="mat-weight" value="0.2" min="0.001" step="any">
+                </div>
+                <div class="form-group">
+                    <label for="mat-tension">Horizontal Tension (kg or lb)</label>
+                    <input type="number" id="mat-tension" value="500" min="1" step="any">
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn" id="mat-cancel">Cancel</button>
+                <button class="btn btn-primary" id="mat-submit">Add Material</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Third-Party CDN libraries: PDF.js and dxf-parser -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/dxf-parser/dist/dxf-parser.js"></script>
+
+    <!-- App Engine Logic -->
+    <script>
+        // --- APP STATE ---
+        let currentMode = 'pan'; // pan, calibrate, point, path, delete
+        let activeMaterialId = null;
+        let snapEnabled = true; // Object snap toggle for CAD linear-run placement
+        let pdfDoc = null;
+        let pageNum = 1;
+        let originalPageWidth = 0;
+        let currentZoom = 1.0;
+        
+        let calibration = {
+            pixelsPerUnit: null,
+            realLength: null,
+            unit: 'm',
+            tempStart: null,
+            tempEnd: null,
+            ratio: null
+        };
+
+        // CAD drawing database variables
+        let dxfData = null; // Stored parsed DXF object
+        let dxfLayers = {}; // Visible/color state of layers
+        let dxfScaleInfo = { fitScale: 1, offsetX: 0, offsetY: 0, minX: 0, maxX: 0, minY: 0, maxY: 0 };
+        let cadSnapPoints = []; // Snap points coordinates
+        let activeSnappedPoint = null; // Coordinates cursor snapped to
+        let cadBlocks = {}; // Map of block templates name -> positions
+        let isDarkTheme = false;
+
+        // Predefined Telecom Materials List
+        let materials = [
+            { id: 'mat-1', name: 'Cat 6A UTP Horizontal Cable', type: 'path', color: '#3b82f6', unit: 'm', layer: 'E-TC-CABL-ISP', waste: 10, slack: 3.0, isAerial: false, w: 0.2, T: 500, symbol: 'circle' },
+            { id: 'mat-2', name: 'Backbone Fiber Cable', type: 'path', color: '#ec4899', unit: 'm', layer: 'U-TC-CABL-OSP', waste: 10, slack: 5.0, isAerial: true, w: 0.2, T: 500, symbol: 'circle' },
+            { id: 'mat-3', name: 'OSP Underground Duct', type: 'path', color: '#f97316', unit: 'm', layer: 'U-TC-COND-OSP', waste: 5, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'circle' },
+            { id: 'mat-4', name: 'Wireless Access Point (AP)', type: 'point', color: '#f59e0b', unit: 'pcs', layer: 'E-TC-EQUP-WAP', waste: 0, slack: 3.0, isAerial: false, w: 0.0, T: 1, symbol: 'wap' },
+            { id: 'mat-5', name: 'Workstation Data Outlet', type: 'point', color: '#10b981', unit: 'pcs', layer: 'E-TC-WALL-OUTL', waste: 0, slack: 3.0, isAerial: false, w: 0.0, T: 1, symbol: 'outlet' },
+            { id: 'mat-6', name: 'Splice Vault / Handhole', type: 'point', color: '#6366f1', unit: 'pcs', layer: 'U-TC-EQUP-MHHL', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'handhole' },
+            { id: 'mat-7', name: 'Splice Closure / Cabinet', type: 'point', color: '#a855f7', unit: 'pcs', layer: 'U-TC-EQUP-CLOS', waste: 0, slack: 5.0, isAerial: false, w: 0.0, T: 1, symbol: 'closure' }
+        ];
+
+        // Annotation/Measurement elements
+        let takeoffs = []; // { id, materialId, type, points: [{x, y}], page, physicalValue }
+        
+        // Active drawing state
+        let activeDrawingPath = []; // Current line nodes
+        let tempMousePos = null;
+
+        // UI references
+        const fileInput = document.getElementById('file-input');
+        const fileInputEmpty = document.getElementById('file-input-empty');
+        const emptyState = document.getElementById('empty-state');
+        const canvasOuter = document.getElementById('canvas-outer');
+        const canvasBg = document.getElementById('canvas-bg');
+        const canvasFg = document.getElementById('canvas-fg');
+        const ctxBg = canvasBg.getContext('2d');
+        const ctxFg = canvasFg.getContext('2d');
+        const toolbar = document.getElementById('toolbar');
+        const viewControls = document.getElementById('view-controls');
+        const helpBanner = document.getElementById('help-banner');
+        const helpBannerText = document.getElementById('help-banner-text');
+        const pageNavigation = document.getElementById('page-navigation');
+        const bottomPanel = document.getElementById('bottom-panel');
+        const calibrationInfo = document.getElementById('calibration-info');
+        const materialListContainer = document.getElementById('material-list');
+        const takeoffTableBody = document.getElementById('takeoff-table-body');
+        const workspace = document.getElementById('workspace');
+
+        // Calibration method selectors
+        const calMethodSelect = document.getElementById('cal-method-select');
+        const calMethodRatio = document.getElementById('cal-method-ratio');
+        const calMethodLine = document.getElementById('cal-method-line');
+
+        // Modal references
+        const calModal = document.getElementById('calibration-modal');
+        const matModal = document.getElementById('material-modal');
+
+        // --- INITIALIZATION ---
+        window.addEventListener('DOMContentLoaded', () => {
+            renderMaterialsList();
+            setupModeButtons();
+            setupZoomAndPan();
+            setupKeyboardEscListeners();
+
+            // Hook file inputs
+            fileInput.addEventListener('change', handleFileSelect);
+            fileInputEmpty.addEventListener('change', handleFileSelect);
+            
+            // Hook sample DXF loaders
+            document.getElementById('btn-load-sample-dxf').addEventListener('click', loadSampleDXF);
+            document.getElementById('btn-load-sample-dxf-empty').addEventListener('click', loadSampleDXF);
+
+            // Hook new material submits
+            document.getElementById('btn-add-material').addEventListener('click', () => {
+                document.getElementById('mat-preset').value = 'custom';
+                document.getElementById('mat-name').value = '';
+                document.getElementById('mat-layer').value = '';
+                document.getElementById('mat-type').value = 'path';
+                document.getElementById('mat-color').value = '#8b5cf6';
+                document.getElementById('mat-symbol').value = 'circle';
+                document.getElementById('mat-waste').value = '0';
+                document.getElementById('mat-slack').value = '0';
+                document.getElementById('mat-aerial').checked = false;
+                document.getElementById('mat-weight').value = '0.2';
+                document.getElementById('mat-tension').value = '500';
+                updateModalFieldVisibilities();
+                updateSymbolPreview();
+                showModal(matModal);
+            });
+            document.getElementById('mat-cancel').addEventListener('click', () => hideModal(matModal));
+            document.getElementById('mat-submit').addEventListener('click', handleAddMaterial);
+
+            // Hook material preset change & field visibilities
+            document.getElementById('mat-preset').addEventListener('change', handlePresetChange);
+            document.getElementById('mat-type').addEventListener('change', updateModalFieldVisibilities);
+            document.getElementById('mat-aerial').addEventListener('change', updateModalFieldVisibilities);
+            document.getElementById('mat-symbol').addEventListener('change', updateSymbolPreview);
+            document.getElementById('mat-color').addEventListener('input', updateSymbolPreview);
+
+            // Hook Calibration switches
+            calMethodSelect.addEventListener('change', toggleCalMethod);
+            document.getElementById('btn-apply-ratio-cal').addEventListener('click', applyRatioCalibration);
+
+            // Hook manual Calibration triggers
+            document.getElementById('btn-calibrate').addEventListener('click', startCalibration);
+            document.getElementById('cal-cancel').addEventListener('click', () => {
+                hideModal(calModal);
+                calibration.tempStart = null;
+                calibration.tempEnd = null;
+                setMode('pan');
+            });
+            document.getElementById('cal-submit').addEventListener('click', finishCalibrationScale);
+
+            // Export action
+            document.getElementById('btn-export').addEventListener('click', exportTakeoffToCSV);
+        });
+
+        // --- EVENT HANDLERS: FILE MANAGEMENT ---
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            document.getElementById('file-info').innerText = `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+            
+            // Show workspace elements
+            emptyState.style.display = 'none';
+            canvasOuter.style.display = 'block';
+            toolbar.style.display = 'flex';
+            viewControls.style.display = 'flex';
+            helpBanner.style.display = 'flex';
+            bottomPanel.style.display = 'block';
+
+            // Clean CAD states
+            document.getElementById('cad-layers-section').style.display = 'none';
+            document.getElementById('cad-blocks-section').style.display = 'none';
+            dxfData = null;
+            cadSnapPoints = [];
+            activeSnappedPoint = null;
+            cadBlocks = {};
+            isDarkTheme = false;
+            canvasOuter.style.backgroundColor = '#ffffff';
+
+            if (file.type === 'application/pdf') {
+                document.getElementById('ratio-img-warning').style.display = 'none';
+                loadPDFFile(file);
+            } else if (file.type.startsWith('image/')) {
+                document.getElementById('ratio-img-warning').style.display = 'block';
+                loadImageFile(file);
+            } else if (file.name.toLowerCase().endsWith('.dxf')) {
+                document.getElementById('ratio-img-warning').style.display = 'none';
+                loadDXFFile(file);
+            } else {
+                alert('Unsupported file format. Please load a PDF, JPEG/PNG image, or DXF CAD file.');
+            }
+        }
+
+        function loadPDFFile(file) {
+            pageNavigation.style.display = 'flex';
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const typedarray = new Uint8Array(e.target.result);
+                pdfjsLib.getDocument(typedarray).promise.then(pdf => {
+                    pdfDoc = pdf;
+                    pageNum = 1;
+                    renderPDFPage(pageNum);
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function renderPDFPage(num) {
+            if (!pdfDoc) return;
+            document.getElementById('page-num-display').innerText = `Page ${num} of ${pdfDoc.numPages}`;
+            document.getElementById('prev-page').disabled = num <= 1;
+            document.getElementById('next-page').disabled = num >= pdfDoc.numPages;
+
+            pdfDoc.getPage(num).then(page => {
+                const viewport = page.getViewport({ scale: 2.0 }); // High-DPI render
+                
+                canvasBg.width = viewport.width;
+                canvasBg.height = viewport.height;
+                canvasFg.width = viewport.width;
+                canvasFg.height = viewport.height;
+                
+                canvasOuter.style.width = viewport.width + 'px';
+                canvasOuter.style.height = viewport.height + 'px';
+
+                originalPageWidth = viewport.width;
+
+                const renderContext = {
+                    canvasContext: ctxBg,
+                    viewport: viewport
+                };
+                page.render(renderContext).promise.then(() => {
+                    setZoom(1.0);
+                    setMode('pan');
+                    redrawFG();
+                });
+            });
+        }
+
+        // Setup PDF Nav Buttons
+        document.getElementById('prev-page').addEventListener('click', () => {
+            if (pageNum <= 1) return;
+            pageNum--;
+            renderPDFPage(pageNum);
+        });
+        document.getElementById('next-page').addEventListener('click', () => {
+            if (pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            renderPDFPage(pageNum);
+        });
+
+        function loadImageFile(file) {
+            pageNavigation.style.display = 'none';
+            pdfDoc = null;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    canvasBg.width = img.width;
+                    canvasBg.height = img.height;
+                    canvasFg.width = img.width;
+                    canvasFg.height = img.height;
+                    
+                    canvasOuter.style.width = img.width + 'px';
+                    canvasOuter.style.height = img.height + 'px';
+                    originalPageWidth = img.width;
+
+                    ctxBg.clearRect(0, 0, img.width, img.height);
+                    ctxBg.drawImage(img, 0, 0);
+                    
+                    setZoom(1.0);
+                    setMode('pan');
+                    redrawFG();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // --- DXF CAD LOADING AND PROCESSING ---
+        function loadDXFFile(file) {
+            pageNavigation.style.display = 'none';
+            pdfDoc = null;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                try {
+                    const parser = new DxfParser();
+                    dxfData = parser.parseSync(text);
+                    console.log("Parsed DXF:", dxfData);
+                    
+                    processDXFData();
+                } catch (err) {
+                    console.error("DXF parse error:", err);
+                    alert("Error parsing DXF file. Please ensure it is a valid text-format ASCII DXF.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function processDXFData() {
+            if (!dxfData) return;
+            
+            // 1. Compile Layers list
+            dxfLayers = {};
+            if (dxfData.tables && dxfData.tables.layer) {
+                const layerTable = dxfData.tables.layer;
+                const layersList = layerTable.layers || layerTable;
+                for (let key in layersList) {
+                    dxfLayers[key] = {
+                        name: key,
+                        color: layersList[key].color !== undefined ? layersList[key].color : 7,
+                        visible: true
+                    };
+                }
+            }
+            // Catch layers not formally declared in the layers table
+            if (dxfData.entities) {
+                dxfData.entities.forEach(ent => {
+                    if (ent.layer && !dxfLayers[ent.layer]) {
+                        dxfLayers[ent.layer] = {
+                            name: ent.layer,
+                            color: 7,
+                            visible: true
+                        };
+                    }
+                });
+            }
+
+            // 2. Compute Bounding Box and compile Object Snap points database
+            let minX = Infinity, maxX = -Infinity;
+            let minY = Infinity, maxY = -Infinity;
+            cadSnapPoints = [];
+            cadBlocks = {};
+
+            function addSnapPoint(x, y, type = 'vertex') {
+                if (isNaN(x) || isNaN(y)) return;
+                cadSnapPoints.push({ x, y, type });
+                minX = Math.min(minX, x);
+                maxX = Math.max(maxX, x);
+                minY = Math.min(minY, y);
+                maxY = Math.max(maxY, y);
+            }
+
+            // Recursive function to traverse entities and blocks
+            function collectEntitiesPoints(entities, parentInsert = null) {
+                if (!entities) return;
+
+                entities.forEach(entity => {
+                    if (entity.type === 'LINE') {
+                        const start = entity.vertices?.[0] || entity.start;
+                        const end = entity.vertices?.[1] || entity.end;
+                        if (start && end) {
+                            let p1 = parentInsert ? transformBlockPoint(start, parentInsert) : start;
+                            let p2 = parentInsert ? transformBlockPoint(end, parentInsert) : end;
+                            addSnapPoint(p1.x, p1.y, 'endpoint');
+                            addSnapPoint(p2.x, p2.y, 'endpoint');
+                        }
+                    } else if (entity.type === 'LWPOLYLINE' || entity.type === 'POLYLINE') {
+                        if (entity.vertices) {
+                            entity.vertices.forEach(v => {
+                                let pt = parentInsert ? transformBlockPoint(v, parentInsert) : v;
+                                addSnapPoint(pt.x, pt.y, 'vertex');
+                            });
+                        }
+                    } else if (entity.type === 'CIRCLE' || entity.type === 'ARC') {
+                        if (entity.center) {
+                            let pt = parentInsert ? transformBlockPoint(entity.center, parentInsert) : entity.center;
+                            addSnapPoint(pt.x, pt.y, 'center');
+                            if (entity.type === 'CIRCLE' && entity.radius) {
+                                const r = entity.radius;
+                                addSnapPoint(pt.x + r, pt.y, 'quadrant');
+                                addSnapPoint(pt.x - r, pt.y, 'quadrant');
+                                addSnapPoint(pt.x, pt.y + r, 'quadrant');
+                                addSnapPoint(pt.x, pt.y - r, 'quadrant');
+                            }
+                        }
+                    } else if (entity.type === 'INSERT') {
+                        if (entity.position) {
+                            let pt = parentInsert ? transformBlockPoint(entity.position, parentInsert) : entity.position;
+                            addSnapPoint(pt.x, pt.y, 'insert');
+                            
+                            // Compile blocks for automatic block-counting takeoffs
+                            if (!parentInsert) {
+                                if (!cadBlocks[entity.name]) cadBlocks[entity.name] = [];
+                                cadBlocks[entity.name].push({ x: pt.x, y: pt.y });
+                            }
+                            
+                            // Traverse child elements
+                            const blockDef = dxfData.blocks?.[entity.name];
+                            if (blockDef && blockDef.entities) {
+                                const combinedInsert = parentInsert ? mergeInsertTransforms(parentInsert, entity) : entity;
+                                collectEntitiesPoints(blockDef.entities, combinedInsert);
+                            }
+                        }
+                    }
+                });
+            }
+
+            collectEntitiesPoints(dxfData.entities);
+
+            if (minX === Infinity || minY === Infinity) {
+                minX = 0; maxX = 1000;
+                minY = 0; maxY = 1000;
+            }
+
+            const width = Math.max(10, maxX - minX);
+            const height = Math.max(10, maxY - minY);
+            
+            // Adjust canvas sizing to match high-DPI space
+            const targetCanvasWidth = Math.max(1400, window.innerWidth);
+            const targetCanvasHeight = Math.max(900, window.innerHeight);
+
+            canvasBg.width = targetCanvasWidth;
+            canvasBg.height = targetCanvasHeight;
+            canvasFg.width = targetCanvasWidth;
+            canvasFg.height = targetCanvasHeight;
+
+            canvasOuter.style.width = targetCanvasWidth + 'px';
+            canvasOuter.style.height = targetCanvasHeight + 'px';
+            originalPageWidth = targetCanvasWidth;
+
+            // Compute coordinate transforms
+            const margin = 80;
+            const fitScaleX = (targetCanvasWidth - 2 * margin) / width;
+            const fitScaleY = (targetCanvasHeight - 2 * margin) / height;
+            const fitScale = Math.min(fitScaleX, fitScaleY);
+
+            const offsetX = (targetCanvasWidth - width * fitScale) / 2 - minX * fitScale;
+            const offsetY = (targetCanvasHeight - height * fitScale) / 2 + maxY * fitScale;
+
+            dxfScaleInfo = { fitScale, offsetX, offsetY, minX, maxX, minY, maxY };
+
+            // Change layout style theme to Dark CAD Model Space
+            isDarkTheme = true;
+            canvasOuter.style.backgroundColor = '#0b0f19'; 
+
+            // Estimate drawing native units (mm vs ft)
+            const estimatedUnit = width > 500 ? 'm' : 'ft';
+            const defaultRatio = width > 500 ? 1000 : 1; 
+            
+            calibration.unit = estimatedUnit;
+            calibration.pixelsPerUnit = fitScale * defaultRatio;
+            calibration.ratio = defaultRatio;
+
+            calibrationInfo.innerHTML = `
+                <span>Status: <strong style="color:var(--color-success)">Calibrated (CAD Native)</strong></span>
+                <span>Scale: <strong>1 ${estimatedUnit} = ${calibration.pixelsPerUnit.toFixed(2)} px</strong></span>
+            `;
+
+            // Display panels
+            document.getElementById('cad-layers-section').style.display = 'block';
+            document.getElementById('cad-blocks-section').style.display = 'block';
+
+            renderCADLayersUI();
+            renderCADBlocksUI();
+            recalculateTakeoffMeasurements();
+            renderMaterialsList();
+            renderTakeoffTable();
+
+            setZoom(1.0);
+            setMode('pan');
+            drawDXFOnBackground();
+        }
+
+        // CAD Math Transform helper functions
+        function transformBlockPoint(bp, insert) {
+            const theta = (insert.rotation || 0) * Math.PI / 180;
+            const sx = insert.scale?.x !== undefined ? insert.scale.x : 1;
+            const sy = insert.scale?.y !== undefined ? insert.scale.y : 1;
+            
+            const xScaled = bp.x * sx;
+            const yScaled = bp.y * sy;
+            
+            const xRotated = xScaled * Math.cos(theta) - yScaled * Math.sin(theta);
+            const yRotated = xScaled * Math.sin(theta) + yScaled * Math.cos(theta);
+            
+            return {
+                x: insert.position.x + xRotated,
+                y: insert.position.y + yRotated
+            };
+        }
+
+        function mergeInsertTransforms(parent, child) {
+            const childPosTransformed = transformBlockPoint(child.position, parent);
+            
+            const parentRot = parent.rotation || 0;
+            const childRot = child.rotation || 0;
+            const combinedRot = parentRot + childRot;
+
+            const parentSx = parent.scale?.x !== undefined ? parent.scale.x : 1;
+            const parentSy = parent.scale?.y !== undefined ? parent.scale.y : 1;
+            const childSx = child.scale?.x !== undefined ? child.scale.x : 1;
+            const childSy = child.scale?.y !== undefined ? child.scale.y : 1;
+            
+            return {
+                position: childPosTransformed,
+                rotation: combinedRot,
+                scale: {
+                    x: parentSx * childSx,
+                    y: parentSy * childSy,
+                    z: 1
+                }
+            };
+        }
+
+        function drawDXFOnBackground() {
+            if (!dxfData) return;
+            
+            ctxBg.clearRect(0, 0, canvasBg.width, canvasBg.height);
+
+            // AutoCAD dark model background
+            ctxBg.fillStyle = '#0b0f19';
+            ctxBg.fillRect(0, 0, canvasBg.width, canvasBg.height);
+
+            const { fitScale, offsetX, offsetY } = dxfScaleInfo;
+
+            function drawEntities(entities, parentInsert = null) {
+                if (!entities) return;
+
+                entities.forEach(entity => {
+                    const layer = dxfLayers[entity.layer];
+                    if (layer && !layer.visible) return;
+
+                    const color = getACIColor(entity.color, entity.layer, !isDarkTheme);
+                    ctxBg.strokeStyle = color;
+                    ctxBg.fillStyle = color;
+                    ctxBg.lineWidth = 1;
+
+                    if (entity.type === 'LINE') {
+                        const start = entity.vertices?.[0] || entity.start;
+                        const end = entity.vertices?.[1] || entity.end;
+                        if (start && end) {
+                            const p1 = parentInsert ? transformBlockPoint(start, parentInsert) : start;
+                            const p2 = parentInsert ? transformBlockPoint(end, parentInsert) : end;
+                            
+                            const cx1 = offsetX + p1.x * fitScale;
+                            const cy1 = offsetY - p1.y * fitScale;
+                            const cx2 = offsetX + p2.x * fitScale;
+                            const cy2 = offsetY - p2.y * fitScale;
+
+                            ctxBg.beginPath();
+                            ctxBg.moveTo(cx1, cy1);
+                            ctxBg.lineTo(cx2, cy2);
+                            ctxBg.stroke();
+                        }
+                    } else if (entity.type === 'LWPOLYLINE' || entity.type === 'POLYLINE') {
+                        if (entity.vertices && entity.vertices.length > 0) {
+                            ctxBg.beginPath();
+                            const v0 = parentInsert ? transformBlockPoint(entity.vertices[0], parentInsert) : entity.vertices[0];
+                            ctxBg.moveTo(offsetX + v0.x * fitScale, offsetY - v0.y * fitScale);
+                            
+                            for (let i = 1; i < entity.vertices.length; i++) {
+                                const vi = parentInsert ? transformBlockPoint(entity.vertices[i], parentInsert) : entity.vertices[i];
+                                ctxBg.lineTo(offsetX + vi.x * fitScale, offsetY - vi.y * fitScale);
+                            }
+                            if (entity.closed) {
+                                ctxBg.closePath();
+                            }
+                            ctxBg.stroke();
+                        }
+                    } else if (entity.type === 'CIRCLE') {
+                        if (entity.center && entity.radius) {
+                            const pt = parentInsert ? transformBlockPoint(entity.center, parentInsert) : entity.center;
+                            const cx = offsetX + pt.x * fitScale;
+                            const cy = offsetY - pt.y * fitScale;
+                            const r = entity.radius * fitScale;
+
+                            ctxBg.beginPath();
+                            ctxBg.arc(cx, cy, r, 0, 2 * Math.PI);
+                            ctxBg.stroke();
+                        }
+                    } else if (entity.type === 'ARC') {
+                        if (entity.center && entity.radius) {
+                            const pt = parentInsert ? transformBlockPoint(entity.center, parentInsert) : entity.center;
+                            const cx = offsetX + pt.x * fitScale;
+                            const cy = offsetY - pt.y * fitScale;
+                            const r = entity.radius * fitScale;
+
+                            const startAngleRad = -entity.startAngle * Math.PI / 180;
+                            const endAngleRad = -entity.endAngle * Math.PI / 180;
+
+                            ctxBg.beginPath();
+                            ctxBg.arc(cx, cy, r, startAngleRad, endAngleRad, true);
+                            ctxBg.stroke();
+                        }
+                    } else if (entity.type === 'TEXT' || entity.type === 'MTEXT') {
+                        const textPos = entity.startPoint || entity.position;
+                        if (textPos && entity.text) {
+                            const pt = parentInsert ? transformBlockPoint(textPos, parentInsert) : textPos;
+                            const tx = offsetX + pt.x * fitScale;
+                            const ty = offsetY - pt.y * fitScale;
+                            const th = (entity.height || 10) * fitScale;
+
+                            ctxBg.font = `${Math.max(7, th)}px Inter, sans-serif`;
+                            ctxBg.fillStyle = color;
+                            ctxBg.textAlign = 'left';
+                            ctxBg.textBaseline = 'bottom';
+                            
+                            let cleanText = entity.text.replace(/\\P/g, ' ')
+                                                       .replace(/\\S[^;]+;/g, '')
+                                                       .replace(/\\A\d+;/g, '')
+                                                       .replace(/%%[dDpPcCuU]/g, '')
+                                                       .replace(/[{}]/g, '');
+                            ctxBg.fillText(cleanText, tx, ty);
+                        }
+                    } else if (entity.type === 'INSERT') {
+                        const blockDef = dxfData.blocks?.[entity.name];
+                        if (blockDef && blockDef.entities) {
+                            const combinedInsert = parentInsert ? mergeInsertTransforms(parentInsert, entity) : entity;
+                            drawEntities(blockDef.entities, combinedInsert);
+                        }
+                    }
+                });
+            }
+
+            drawEntities(dxfData.entities);
+        }
+
+        // AutoCAD ACI index mapping to Hex colors
+        function getACIColor(colorIndex, layerName, isDark) {
+            if (colorIndex === 256 || colorIndex === undefined) {
+                const layer = dxfData?.tables?.layer?.layers?.[layerName] || dxfData?.tables?.layer?.[layerName];
+                if (layer && layer.color !== undefined && layer.color !== 256) {
+                    return getACIColor(layer.color, layerName, isDark);
+                }
+                return isDark ? '#ffffff' : '#0f172a';
+            }
+            
+            const aci = {
+                1: '#ef4444', // Red
+                2: '#eab308', // Yellow
+                3: '#10b981', // Green
+                4: '#06b6d4', // Cyan
+                5: '#3b82f6', // Blue
+                6: '#d946ef', // Magenta
+                7: isDark ? '#f8fafc' : '#0f172a', // White/Black
+                8: '#64748b', // Slate gray
+                9: '#94a3b8'  // Light gray
+            };
+            
+            return aci[colorIndex] || (isDark ? '#f8fafc' : '#0f172a');
+        }
+
+        // --- DYNAMIC LAYER CONTROLS ---
+        function renderCADLayersUI() {
+            const list = document.getElementById('cad-layers-list');
+            list.innerHTML = '';
+            
+            for (let name in dxfLayers) {
+                const layer = dxfLayers[name];
+                const item = document.createElement('div');
+                item.style.display = 'flex';
+                item.style.alignItems = 'center';
+                item.style.justifyContent = 'space-between';
+                item.style.fontSize = '0.8rem';
+                item.style.padding = '4px 6px';
+                item.style.borderRadius = '4px';
+                item.style.backgroundColor = 'rgba(255,255,255,0.01)';
+                
+                const colorHex = getACIColor(layer.color, name, false);
+                
+                item.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <input type="checkbox" id="layer-chk-${name}" ${layer.visible ? 'checked' : ''} style="margin:0; cursor:pointer;">
+                        <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background-color:${colorHex}"></span>
+                        <span style="color:var(--text-primary); text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:220px;" title="${name}">${name}</span>
+                    </div>
+                `;
+                
+                const chk = item.querySelector('input');
+                chk.addEventListener('change', (e) => {
+                    layer.visible = e.target.checked;
+                    drawDXFOnBackground();
+                });
+                
+                list.appendChild(item);
+            }
+        }
+
+        // --- BLOCK AUTOMATION AND TAKEOFF MAPPING ---
+        function renderCADBlocksUI() {
+            const list = document.getElementById('cad-blocks-list');
+            list.innerHTML = '';
+
+            const blockNames = Object.keys(cadBlocks);
+            if (blockNames.length === 0) {
+                list.innerHTML = `<span style="font-size:0.8rem; color:var(--text-muted)">No insert blocks symbols detected.</span>`;
+                return;
+            }
+
+            blockNames.forEach(name => {
+                const count = cadBlocks[name].length;
+                const container = document.createElement('div');
+                container.style.display = 'flex';
+                container.style.flexDirection = 'column';
+                container.style.gap = '4px';
+                container.style.padding = '8px';
+                container.style.borderRadius = 'var(--radius-md)';
+                container.style.backgroundColor = 'rgba(255,255,255,0.02)';
+                container.style.border = '1px solid var(--border-subtle)';
+
+                let optionsHtml = `<option value="">-- Match Material --</option>`;
+                materials.forEach(m => {
+                    optionsHtml += `<option value="${m.id}">${m.name} (${m.type === 'path' ? 'Linear' : 'Count'})</option>`;
+                });
+
+                container.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85rem;">
+                        <strong style="color:var(--color-primary); font-family:'Outfit';">${name}</strong>
+                        <span style="background:var(--bg-surface-elevated); padding:2px 8px; border-radius:10px; font-weight:600; font-size:0.75rem;">${count} found</span>
+                    </div>
+                    <div style="display:flex; gap:6px; margin-top:4px;">
+                        <select id="block-map-select-${name}" style="flex:1; padding:4px 8px; font-size:0.8rem;">
+                            ${optionsHtml}
+                        </select>
+                        <button class="btn btn-primary" id="btn-autocount-${name}" style="width:auto; padding:4px 10px; font-size:0.8rem;"><i class="fa-solid fa-calculator"></i> Auto-Count</button>
+                    </div>
+                `;
+
+                const btn = container.querySelector(`#btn-autocount-${name}`);
+                btn.addEventListener('click', () => {
+                    const materialId = container.querySelector(`#block-map-select-${name}`).value;
+                    if (!materialId) {
+                        alert('Please select a material type to map this block to.');
+                        return;
+                    }
+                    injectBlockTakeoffs(name, materialId);
+                });
+
+                list.appendChild(container);
+            });
+        }
+
+        function injectBlockTakeoffs(blockName, materialId) {
+            const coordsList = cadBlocks[blockName];
+            if (!coordsList) return;
+
+            const material = materials.find(m => m.id === materialId);
+            if (!material) return;
+
+            // Clear any existing takeoffs of this material to avoid duplicate markers
+            takeoffs = takeoffs.filter(t => t.materialId !== materialId);
+
+            coordsList.forEach(coord => {
+                if (material.type === 'point') {
+                    // Convert CAD coordinates to Canvas space
+                    const cx = dxfScaleInfo.offsetX + coord.x * dxfScaleInfo.fitScale;
+                    const cy = dxfScaleInfo.offsetY - coord.y * dxfScaleInfo.fitScale;
+                    
+                    takeoffs.push({
+                        id: 'takeoff-' + Date.now() + Math.random().toString(36).substr(2, 5),
+                        materialId: materialId,
+                        type: 'point',
+                        points: [{ x: cx, y: cy }],
+                        page: 1,
+                        physicalValue: 1
+                    });
+                }
+            });
+
+            renderMaterialsList();
+            renderTakeoffTable();
+            redrawFG();
+            alert(`Auto-Takeoff complete! Mapped ${coordsList.length} markers for block "${blockName}" into "${material.name}".`);
+        }
+
+        // --- EMBEDDED TEST CAD FILE GENERATOR ---
+        function loadSampleDXF() {
+            const dxfText = `  0
+SECTION
+  2
+HEADER
+  0
+ENDSEC
+  0
+SECTION
+  2
+TABLES
+  0
+TABLE
+  2
+LAYER
+ 70
+  3
+  0
+LAYER
+  2
+Walls
+ 62
+  1
+  0
+LAYER
+  2
+Racks
+ 62
+  5
+  0
+LAYER
+  2
+Devices
+ 62
+  2
+  0
+ENDTAB
+  0
+ENDSEC
+  0
+SECTION
+  2
+BLOCKS
+  0
+BLOCK
+  2
+WIFI_AP
+ 70
+  0
+ 10
+  0
+ 20
+  0
+ 30
+  0
+  0
+CIRCLE
+  8
+Devices
+ 10
+  0
+ 20
+  0
+ 40
+  5
+  0
+LINE
+  8
+Devices
+ 10
+ -5
+ 20
+  0
+ 11
+  5
+ 21
+  0
+  0
+LINE
+  8
+Devices
+ 10
+  0
+ 20
+ -5
+ 11
+  0
+ 21
+  5
+  0
+ENDBLK
+  0
+ENDSEC
+  0
+SECTION
+  2
+ENTITIES
+  0
+LINE
+  8
+Walls
+ 10
+ 10
+ 20
+ 10
+ 11
+ 490
+ 21
+ 10
+  0
+LINE
+  8
+Walls
+ 10
+ 490
+ 20
+ 10
+ 11
+ 490
+ 21
+ 390
+  0
+LINE
+  8
+Walls
+ 10
+ 490
+ 20
+ 390
+ 11
+ 10
+ 21
+ 390
+  0
+LINE
+  8
+Walls
+ 10
+ 10
+ 20
+ 390
+ 11
+ 10
+ 21
+ 10
+  0
+CIRCLE
+  8
+Racks
+ 10
+ 250
+ 20
+ 200
+ 40
+ 25
+  0
+TEXT
+  8
+Walls
+ 10
+ 200
+ 20
+ 350
+ 40
+ 12
+  1
+Sample Telecom CAD Layout
+  0
+INSERT
+  2
+WIFI_AP
+  8
+Devices
+ 10
+ 100
+ 20
+ 150
+ 50
+  0
+  0
+INSERT
+  2
+WIFI_AP
+  8
+Devices
+ 10
+ 400
+ 20
+ 150
+ 50
+  0
+  0
+INSERT
+  2
+WIFI_AP
+  8
+Devices
+ 10
+ 250
+ 300
+ 50
+  0
+  0
+ENDSEC
+  0
+EOF`;
+
+            document.getElementById('file-info').innerText = `Sample_CAD_Blueprint.dxf (Embedded Demo)`;
+            
+            // Show workspace elements
+            emptyState.style.display = 'none';
+            canvasOuter.style.display = 'block';
+            toolbar.style.display = 'flex';
+            viewControls.style.display = 'flex';
+            helpBanner.style.display = 'flex';
+            bottomPanel.style.display = 'block';
+
+            // Clean PDF and Image states
+            pdfDoc = null;
+            takeoffs = [];
+
+            try {
+                const parser = new DxfParser();
+                dxfData = parser.parseSync(dxfText);
+                console.log("Parsed DXF:", dxfData);
+                processDXFData();
+            } catch (err) {
+                console.error("DXF parse error:", err);
+                alert("Error rendering embedded sample DXF.");
+            }
+        }
+
+        // --- CALIBRATION (SCALING) ---
+        function toggleCalMethod() {
+            const method = calMethodSelect.value;
+            if (method === 'ratio') {
+                calMethodRatio.style.display = 'block';
+                calMethodLine.style.display = 'none';
+            } else {
+                calMethodRatio.style.display = 'none';
+                calMethodLine.style.display = 'block';
+            }
+        }
+
+        // Method 1: Apply Calibration by Scale Ratio (e.g. 1:300)
+        function applyRatioCalibration() {
+            const ratioVal = parseFloat(document.getElementById('cal-ratio-input').value);
+            const unitVal = document.getElementById('cal-ratio-unit').value;
+
+            if (isNaN(ratioVal) || ratioVal <= 0) {
+                alert('Please enter a valid scale ratio (e.g., 300 for 1:300).');
+                return;
+            }
+
+            let pxPerUnit = 0;
+            
+            if (pdfDoc) {
+                const renderScale = 2.0;
+                if (unitVal === 'm') {
+                    pxPerUnit = (2834.64567 / ratioVal) * renderScale;
+                } else if (unitVal === 'ft') {
+                    pxPerUnit = (864.0 / ratioVal) * renderScale;
+                }
+            } else if (dxfData) {
+                // CAD drawings coordinates are directly in drawing units (mm/inches)
+                const fitScale = dxfScaleInfo.fitScale;
+                pxPerUnit = fitScale * ratioVal;
+            } else {
+                const dpi = 96.0;
+                if (unitVal === 'm') {
+                    pxPerUnit = (dpi * 39.3700787) / ratioVal;
+                } else if (unitVal === 'ft') {
+                    pxPerUnit = (dpi * 12.0) / ratioVal;
+                }
+            }
+
+            calibration.pixelsPerUnit = pxPerUnit;
+            calibration.unit = unitVal;
+            calibration.realLength = null; 
+            calibration.ratio = ratioVal;
+
+            // Recalculate units in existing materials
+            materials.forEach(m => {
+                if (m.type === 'path') m.unit = unitVal;
+            });
+
+            // Update UI status
+            calibrationInfo.innerHTML = `
+                <span>Status: <strong style="color:var(--color-success)">Calibrated (1:${ratioVal})</strong></span>
+                <span>Scale: <strong>1 ${unitVal} = ${calibration.pixelsPerUnit.toFixed(2)} px</strong></span>
+            `;
+
+            recalculateTakeoffMeasurements();
+            renderMaterialsList();
+            renderTakeoffTable();
+            redrawFG();
+            
+            alert(`Calibration Scale 1:${ratioVal} successfully applied!\n1 ${unitVal} = ${calibration.pixelsPerUnit.toFixed(2)} pixels.`);
+        }
+
+        // Method 2: Manual Reference Line Calibration
+        function startCalibration() {
+            setMode('calibrate');
+            calibration.tempStart = null;
+            calibration.tempEnd = null;
+        }
+
+        function triggerCalibrationModal() {
+            const p1 = calibration.tempStart;
+            const p2 = calibration.tempEnd;
+            const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+            if (dist > 5) {
+                showModal(calModal);
+                document.getElementById('cal-length').focus();
+            } else {
+                calibration.tempStart = null;
+                calibration.tempEnd = null;
+                redrawFG();
+            }
+        }
+
+        function finishCalibrationScale() {
+            const lengthInput = document.getElementById('cal-length').value;
+            const unitSelect = document.getElementById('cal-unit').value;
+            
+            if (!lengthInput || isNaN(lengthInput) || parseFloat(lengthInput) <= 0) {
+                alert('Please enter a valid physical length.');
+                return;
+            }
+
+            const p1 = calibration.tempStart;
+            const p2 = calibration.tempEnd;
+            const pxDistance = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+
+            if (pxDistance === 0) {
+                alert('Calibration line must represent a physical distance. Try drawing again.');
+                return;
+            }
+
+            calibration.realLength = parseFloat(lengthInput);
+            calibration.unit = unitSelect;
+            calibration.pixelsPerUnit = pxDistance / calibration.realLength;
+            calibration.ratio = null; 
+
+            materials.forEach(m => {
+                if (m.type === 'path') m.unit = unitSelect;
+            });
+
+            calibrationInfo.innerHTML = `
+                <span>Status: <strong style="color:var(--color-success)">Calibrated (Reference Line)</strong></span>
+                <span>Scale: <strong>1 ${unitSelect} = ${calibration.pixelsPerUnit.toFixed(2)} px</strong></span>
+            `;
+            
+            hideModal(calModal);
+            setMode('pan');
+            
+            recalculateTakeoffMeasurements();
+            renderMaterialsList();
+            renderTakeoffTable();
+            redrawFG();
+        }
+
+        const ASSET_PRESETS = {
+            'custom': { name: '', type: 'path', color: '#8b5cf6', layer: '', waste: 0, slack: 0, isAerial: false, w: 0.2, T: 500, symbol: 'circle' },
+            'backbone-fiber': { name: 'Backbone Fiber Cable', type: 'path', color: '#ec4899', layer: 'U-TC-CABL-OSP', waste: 10, slack: 5.0, isAerial: true, w: 0.2, T: 500, symbol: 'circle' },
+            'osp-duct': { name: 'OSP Underground Duct', type: 'path', color: '#f97316', layer: 'U-TC-COND-OSP', waste: 5, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'circle' },
+            'handhole': { name: 'Splice Vault / Handhole', type: 'point', color: '#6366f1', layer: 'U-TC-EQUP-MHHL', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'handhole' },
+            'closure': { name: 'Splice Closure / Cabinet', type: 'point', color: '#a855f7', layer: 'U-TC-EQUP-CLOS', waste: 0, slack: 5.0, isAerial: false, w: 0.0, T: 1, symbol: 'closure' },
+            'wap': { name: 'Wireless Access Point (AP)', type: 'point', color: '#f59e0b', layer: 'E-TC-EQUP-WAP', waste: 0, slack: 3.0, isAerial: false, w: 0.0, T: 1, symbol: 'wap' },
+            'outlet': { name: 'Workstation Data Outlet', type: 'point', color: '#10b981', layer: 'E-TC-WALL-OUTL', waste: 0, slack: 3.0, isAerial: false, w: 0.0, T: 1, symbol: 'outlet' }
+        };
+
+        function handlePresetChange(e) {
+            const val = e.target.value;
+            const preset = ASSET_PRESETS[val];
+            if (!preset) return;
+
+            if (val !== 'custom') {
+                document.getElementById('mat-name').value = preset.name;
+                document.getElementById('mat-layer').value = preset.layer;
+                document.getElementById('mat-type').value = preset.type;
+                document.getElementById('mat-color').value = preset.color;
+                document.getElementById('mat-symbol').value = preset.symbol || 'circle';
+                document.getElementById('mat-waste').value = preset.waste;
+                document.getElementById('mat-slack').value = preset.slack;
+                document.getElementById('mat-aerial').checked = preset.isAerial;
+                document.getElementById('mat-weight').value = preset.w;
+                document.getElementById('mat-tension').value = preset.T;
+            }
+            updateModalFieldVisibilities();
+            updateSymbolPreview();
+        }
+
+        function updateModalFieldVisibilities() {
+            const style = document.getElementById('mat-type').value;
+            const isAerial = document.getElementById('mat-aerial').checked;
+            
+            const aerialToggleContainer = document.getElementById('mat-aerial-toggle-container');
+            const aerialFields = document.getElementById('mat-aerial-fields');
+            const symbolRow = document.getElementById('mat-symbol-row');
+            
+            // Symbol row only shown for point/counter materials
+            symbolRow.style.display = (style === 'point') ? 'grid' : 'none';
+
+            if (style === 'point') {
+                aerialToggleContainer.style.display = 'none';
+                aerialFields.style.display = 'none';
+            } else {
+                aerialToggleContainer.style.display = 'flex';
+                if (isAerial) {
+                    aerialFields.style.display = 'grid';
+                } else {
+                    aerialFields.style.display = 'none';
+                }
+            }
+        }
+
+        function calculateTakeoffItemValues(item, material) {
+            if (!calibration.pixelsPerUnit) {
+                let px = 0;
+                for (let i = 0; i < item.points.length - 1; i++) {
+                    px += Math.hypot(item.points[i+1].x - item.points[i].x, item.points[i+1].y - item.points[i].y);
+                }
+                return { rawLength: px, sagLength: px, takeoffLength: px };
+            }
+
+            if (item.type === 'point') {
+                return {
+                    rawLength: 1,
+                    sagLength: 1,
+                    takeoffLength: 1,
+                    slackLength: (material && material.slack) ? parseFloat(material.slack) : 0
+                };
+            }
+
+            let rawLength = 0;
+            let sagLength = 0;
+            const isAerial = material ? !!material.isAerial : false;
+            const w = material && material.w ? parseFloat(material.w) : 0;
+            const T = material && material.T ? parseFloat(material.T) : 1;
+
+            for (let i = 0; i < item.points.length - 1; i++) {
+                const p1 = item.points[i];
+                const p2 = item.points[i + 1];
+                const pxDist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+                const L = pxDist / calibration.pixelsPerUnit;
+                rawLength += L;
+
+                if (isAerial && w > 0 && T > 0) {
+                    const S = L * (1 + (Math.pow(w, 2) * Math.pow(L, 2)) / (24 * Math.pow(T, 2)));
+                    sagLength += S;
+                } else {
+                    sagLength += L;
+                }
+            }
+
+            const waste = material && material.waste ? parseFloat(material.waste) : 0;
+            const slack = material && material.slack ? parseFloat(material.slack) : 0;
+            const takeoffLength = sagLength * (1 + waste / 100) + slack;
+
+            return { rawLength, sagLength, takeoffLength };
+        }
+
+        function recalculateTakeoffMeasurements() {
+            if (!calibration.pixelsPerUnit) return;
+            
+            takeoffs.forEach(item => {
+                const material = materials.find(m => m.id === item.materialId);
+                const vals = calculateTakeoffItemValues(item, material);
+                item.physicalValue = vals.sagLength; 
+            });
+        }
+
+        function renderMaterialsList() {
+            materialListContainer.innerHTML = '';
+            materials.forEach(m => {
+                const item = document.createElement('div');
+                item.className = `material-item ${activeMaterialId === m.id ? 'selected' : ''}`;
+                item.dataset.id = m.id;
+                
+                const summary = getMaterialSummary(m.id);
+                let quantityStr = '';
+                
+                if (m.type === 'path') {
+                    if (calibration.pixelsPerUnit) {
+                        quantityStr = `${summary.totalTakeoff.toFixed(1)} ${calibration.unit}`;
+                    } else {
+                        quantityStr = `${Math.round(summary.totalPixels)} px (Uncalibrated)`;
+                    }
+                } else {
+                    quantityStr = `${summary.count} pcs`;
+                }
+
+                const layerBadge = m.layer ? `<div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;"><i class="fa-solid fa-layer-group"></i> ${m.layer}</div>` : '';
+                const symbolCanvasId = `sym-preview-${m.id}`;
+
+                item.innerHTML = `
+                    <div class="material-meta" style="flex:1;">
+                        <canvas id="${symbolCanvasId}" width="28" height="28" style="flex-shrink:0; border-radius:4px;"></canvas>
+                        <div style="flex:1; min-width:0;">
+                            <div class="material-name" style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap;" title="${m.name}">${m.name}</div>
+                            ${layerBadge}
+                            <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">
+                                <span class="material-type-tag">${m.type === 'path' ? 'Linear' : 'Counter'}</span>
+                                <span style="margin-left: 8px; font-weight: 600; color: var(--text-primary);">${quantityStr}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="material-delete-btn" onclick="event.stopPropagation(); deleteMaterial('${m.id}')" style="margin-left:8px;"><i class="fa-solid fa-trash-can"></i></button>
+                `;
+
+                item.addEventListener('click', () => {
+                    activeMaterialId = m.id;
+                    renderMaterialsList();
+                    if (m.type === 'path') {
+                        setMode('path');
+                    } else {
+                        setMode('point');
+                    }
+                });
+
+                materialListContainer.appendChild(item);
+
+                // Draw symbol on mini canvas after it's in the DOM
+                const symCanvas = document.getElementById(symbolCanvasId);
+                if (symCanvas) {
+                    const sctx = symCanvas.getContext('2d');
+                    if (m.type === 'point') {
+                        drawEquipmentSymbol(sctx, 14, 14, m.symbol || 'circle', m.color, 16);
+                    } else {
+                        // For linear materials, draw a colored line segment
+                        sctx.strokeStyle = m.color;
+                        sctx.lineWidth = 3;
+                        sctx.beginPath();
+                        sctx.moveTo(4, 20);
+                        sctx.lineTo(14, 8);
+                        sctx.lineTo(24, 20);
+                        sctx.stroke();
+                        sctx.fillStyle = '#ffffff';
+                        [4, 14, 24].forEach((px, i) => {
+                            const py = i === 1 ? 8 : 20;
+                            sctx.beginPath();
+                            sctx.arc(px, py, 2.5, 0, Math.PI * 2);
+                            sctx.fill();
+                        });
+                    }
+                }
+            });
+        }
+
+        function handleAddMaterial() {
+            const name = document.getElementById('mat-name').value.trim();
+            const type = document.getElementById('mat-type').value;
+            const color = document.getElementById('mat-color').value;
+            const symbol = document.getElementById('mat-symbol').value || 'circle';
+            const layer = document.getElementById('mat-layer').value.trim();
+            const waste = parseFloat(document.getElementById('mat-waste').value) || 0;
+            const slack = parseFloat(document.getElementById('mat-slack').value) || 0;
+            const isAerial = document.getElementById('mat-aerial').checked;
+            const w = parseFloat(document.getElementById('mat-weight').value) || 0.2;
+            const T = parseFloat(document.getElementById('mat-tension').value) || 500;
+
+            if (!name) {
+                alert('Please enter a name for the material.');
+                return;
+            }
+
+            const id = 'mat-' + Date.now();
+            const unit = type === 'path' ? calibration.unit : 'pcs';
+            materials.push({ id, name, type, color, unit, layer, waste, slack, isAerial, w, T, symbol });
+            activeMaterialId = id;
+
+            hideModal(matModal);
+            
+            recalculateTakeoffMeasurements();
+            renderMaterialsList();
+            renderTakeoffTable();
+            setMode(type);
+        }
+
+		function deleteMaterial(id) {
+			if (confirm('Are you sure you want to delete this material and all associated measurements from the drawing?')) {
+				materials = materials.filter(m => m.id !== id);
+				takeoffs = takeoffs.filter(t => t.materialId !== id);
+				if (activeMaterialId === id) activeMaterialId = null;
+				renderMaterialsList();
+				renderTakeoffTable();
+				redrawFG();
+			}
+		}
+
+		/* ✅ INSERT BELOW THIS LINE ✅ */
+
+		function exportMaterialConfig() {
+			const config = {
+				version: "1.0",
+				units: calibration.unit || "m",
+				materials: materials.map(m => ({ ...m }))
+			};
+
+			const blob = new Blob(
+				[JSON.stringify(config, null, 2)],
+				{ type: "application/json" }
+			);
+
+			const link = document.createElement("a");
+			link.href = URL.createObjectURL(blob);
+			link.download = `material_config_${Date.now()}.json`;
+			link.click();
+		}
+
+        function getMaterialSummary(matId) {
+            const material = materials.find(m => m.id === matId);
+            const items = takeoffs.filter(t => t.materialId === matId);
+            const count = items.length;
+            
+            let totalRaw = 0;
+            let totalSag = 0;
+            let totalTakeoff = 0;
+            let totalPixels = 0;
+            let totalSlackForPoints = 0;
+            
+            items.forEach(item => {
+                const vals = calculateTakeoffItemValues(item, material);
+                if (item.type === 'path') {
+                    totalRaw += vals.rawLength;
+                    totalSag += vals.sagLength;
+                    totalTakeoff += vals.takeoffLength;
+                    
+                    let px = 0;
+                    for (let s = 0; s < item.points.length - 1; s++) {
+                        px += Math.hypot(item.points[s+1].x - item.points[s].x, item.points[s+1].y - item.points[s].y);
+                    }
+                    totalPixels += px;
+                } else {
+                    totalRaw += 1;
+                    totalSag += 1;
+                    totalTakeoff += 1; 
+                    totalSlackForPoints += vals.slackLength || 0;
+                }
+            });
+
+            return { 
+                count, 
+                totalRaw, 
+                totalSag, 
+                totalTakeoff, 
+                totalPixels,
+                totalSlackForPoints
+            };
+        }
+
+        // --- DRAWING & CANVAS INTERACTION ---
+        function setMode(mode) {
+            currentMode = mode;
+            
+            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+            
+            if (mode === 'pan') {
+                document.getElementById('tool-pan').classList.add('active');
+                helpBannerText.innerText = "Navigation Mode: Drag mouse to pan. Ctrl + Scroll to Zoom.";
+            } else if (mode === 'calibrate') {
+                helpBannerText.innerText = "Calibration: Click start point, drag (or click again) at the end point of a known length.";
+            } else if (mode === 'point') {
+                document.getElementById('tool-point').classList.add('active');
+                const mat = materials.find(m => m.id === activeMaterialId);
+                helpBannerText.innerText = `Pin Placer: Click on layout to count "${mat ? mat.name : 'selected material'}".`;
+            } else if (mode === 'path') {
+                document.getElementById('tool-path').classList.add('active');
+                const mat = materials.find(m => m.id === activeMaterialId);
+                helpBannerText.innerText = `Linear Drawing: Click layout to trace "${mat ? mat.name : 'selected cable'}". Double-click to complete. ESC to cancel. Snap is ${snapEnabled ? 'ON' : 'OFF'}.`;
+            } else if (mode === 'delete') {
+                document.getElementById('tool-delete').classList.add('active');
+                helpBannerText.innerText = "Delete Mode: Click any placed counter symbol or linear run to remove it. MTO quantities update automatically.";
+            }
+            
+            activeDrawingPath = [];
+            tempMousePos = null;
+
+            if (mode === 'pan') {
+                canvasFg.style.cursor = 'grab';
+            } else if (mode === 'delete') {
+                canvasFg.style.cursor = 'not-allowed';
+            } else {
+                canvasFg.style.cursor = 'crosshair';
+            }
+            redrawFG();
+        }
+
+        function setupModeButtons() {
+            document.getElementById('tool-pan').addEventListener('click', () => setMode('pan'));
+            document.getElementById('tool-point').addEventListener('click', () => {
+                let activeMat = materials.find(m => m.id === activeMaterialId);
+                if (!activeMat || activeMat.type !== 'point') {
+                    const firstPt = materials.find(m => m.type === 'point');
+                    if (firstPt) activeMaterialId = firstPt.id;
+                }
+                setMode('point');
+                renderMaterialsList();
+            });
+            document.getElementById('tool-path').addEventListener('click', () => {
+                let activeMat = materials.find(m => m.id === activeMaterialId);
+                if (!activeMat || activeMat.type !== 'path') {
+                    const firstPath = materials.find(m => m.type === 'path');
+                    if (firstPath) activeMaterialId = firstPath.id;
+                }
+                setMode('path');
+                renderMaterialsList();
+            });
+            document.getElementById('tool-delete').addEventListener('click', () => setMode('delete'));
+            document.getElementById('tool-snap').addEventListener('click', toggleSnapMode);
+            updateSnapToggleButton();
+        }
+
+        function toggleSnapMode() {
+            snapEnabled = !snapEnabled;
+            activeSnappedPoint = null;
+            updateSnapToggleButton();
+            if (currentMode === 'path') {
+                const mat = materials.find(m => m.id === activeMaterialId);
+                helpBannerText.innerText = `Linear Drawing: Click layout to trace "${mat ? mat.name : 'selected cable'}". Double-click to complete. ESC to cancel. Snap is ${snapEnabled ? 'ON' : 'OFF'}.`;
+            }
+            redrawFG();
+        }
+
+        function updateSnapToggleButton() {
+            const btn = document.getElementById('tool-snap');
+            if (!btn) return;
+            btn.classList.toggle('toggle-on', snapEnabled);
+            btn.classList.toggle('toggle-off', !snapEnabled);
+            btn.setAttribute('tooltip', `Object Snap: ${snapEnabled ? 'ON' : 'OFF'}`);
+        }
+
+        // Handle Canvas mouse events
+        let isMouseDown = false;
+        let dragStart = { x: 0, y: 0 };
+        let scrollStart = { x: 0, y: 0 };
+
+        canvasFg.addEventListener('mousedown', (e) => {
+            const coords = getCanvasCoords(e);
+            
+            if (currentMode === 'pan') {
+                isMouseDown = true;
+                canvasFg.style.cursor = 'grabbing';
+                dragStart = { x: e.clientX, y: e.clientY };
+                scrollStart = { x: workspace.scrollLeft, y: workspace.scrollTop };
+            } else if (currentMode === 'calibrate') {
+                if (!calibration.tempStart) {
+                    calibration.tempStart = coords;
+                    calibration.tempEnd = coords;
+                    isMouseDown = true;
+                } else {
+                    calibration.tempEnd = coords;
+                    isMouseDown = false;
+                    triggerCalibrationModal();
+                }
+            } else if (currentMode === 'delete') {
+                const hit = findTakeoffAtPoint(coords);
+                if (hit) {
+                    deleteTakeoffById(hit.id);
+                }
+            } else if (currentMode === 'point') {
+                if (!activeMaterialId) {
+                    alert('Please select or create a Count Material from the palette.');
+                    return;
+                }
+                const activeMat = materials.find(m => m.id === activeMaterialId);
+                if (activeMat.type !== 'point') {
+                    alert('Select a Count Material (e.g. Outlet/AP) to place counter pins.');
+                    return;
+                }
+                
+                takeoffs.push({
+                    id: 'takeoff-' + Date.now(),
+                    materialId: activeMaterialId,
+                    type: 'point',
+                    points: [coords],
+                    page: pageNum,
+                    physicalValue: 1
+                });
+                renderMaterialsList();
+                renderTakeoffTable();
+                redrawFG();
+            } else if (currentMode === 'path') {
+                if (!activeMaterialId) {
+                    alert('Please select or create a Linear Material from the palette.');
+                    return;
+                }
+                const activeMat = materials.find(m => m.id === activeMaterialId);
+                if (activeMat.type !== 'path') {
+                    alert('Select a Linear Material (e.g. Cabling/Conduit) to draw paths.');
+                    return;
+                }
+                
+                activeDrawingPath.push(coords);
+                redrawFG();
+            }
+        });
+
+        canvasFg.addEventListener('mousemove', (e) => {
+            const coords = getCanvasCoords(e);
+            tempMousePos = coords;
+
+            if (isMouseDown && currentMode === 'pan') {
+                const dx = e.clientX - dragStart.x;
+                const dy = e.clientY - dragStart.y;
+                workspace.scrollLeft = scrollStart.x - dx;
+                workspace.scrollTop = scrollStart.y - dy;
+            } else if (currentMode === 'calibrate' && calibration.tempStart) {
+                calibration.tempEnd = coords;
+                redrawFG();
+            } else if (currentMode === 'path' && activeDrawingPath.length > 0) {
+                redrawFG();
+            } else if (currentMode === 'delete') {
+                redrawFG();
+            } else if (snapEnabled && dxfData && currentMode === 'path') {
+                // Force redraw on hover for OSNAP snapping indicator while drawing linear runs
+                redrawFG();
+            }
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (currentMode === 'pan') {
+                isMouseDown = false;
+                canvasFg.style.cursor = 'grab';
+            } else if (currentMode === 'calibrate' && isMouseDown) {
+                const p1 = calibration.tempStart;
+                const p2 = calibration.tempEnd;
+                const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+                if (dist > 10) {
+                    isMouseDown = false;
+                    triggerCalibrationModal();
+                } else {
+                    isMouseDown = false;
+                }
+            }
+        });
+
+        // Double-click to finish polyline run
+        canvasFg.addEventListener('dblclick', (e) => {
+            if (currentMode === 'path' && activeDrawingPath.length > 1) {
+                activeDrawingPath.pop();
+
+                const newTakeoff = {
+                    id: 'takeoff-' + Date.now(),
+                    materialId: activeMaterialId,
+                    type: 'path',
+                    points: [...activeDrawingPath],
+                    page: pageNum,
+                    physicalValue: 0
+                };
+
+                // Use the engineering calculation engine to set physicalValue
+                const material = materials.find(m => m.id === activeMaterialId);
+                const vals = calculateTakeoffItemValues(newTakeoff, material);
+                newTakeoff.physicalValue = vals.sagLength;
+
+                takeoffs.push(newTakeoff);
+
+                activeDrawingPath = [];
+                renderMaterialsList();
+                renderTakeoffTable();
+                redrawFG();
+            }
+        });
+
+        canvasFg.addEventListener('contextmenu', (e) => {
+			e.preventDefault();
+
+			if (currentMode === 'path' && activeDrawingPath.length > 1) {
+				const newTakeoff = {
+					id: 'takeoff-' + Date.now(),
+					materialId: activeMaterialId,
+					type: 'path',
+					points: [...activeDrawingPath],
+					page: pageNum,
+					physicalValue: 0
+				};
+
+				const material = materials.find(m => m.id === activeMaterialId);
+				const vals = calculateTakeoffItemValues(newTakeoff, material);
+				newTakeoff.physicalValue = vals.sagLength;
+
+				takeoffs.push(newTakeoff);
+				activeDrawingPath = [];
+
+				renderMaterialsList();
+				renderTakeoffTable();
+				redrawFG();
+			}
+		});
+
+        function getCanvasCoords(e) {
+            const rect = canvasFg.getBoundingClientRect();
+            let x = (e.clientX - rect.left) / currentZoom;
+            let y = (e.clientY - rect.top) / currentZoom;
+            
+            // CAD vertex object snapping
+            activeSnappedPoint = null;
+            if (snapEnabled && dxfData && currentMode === 'path') {
+                const snapRadius = 15; // px threshold
+                let minDistance = snapRadius;
+
+                cadSnapPoints.forEach(pt => {
+                    // Map pt to Canvas space
+                    const cx = dxfScaleInfo.offsetX + pt.x * dxfScaleInfo.fitScale;
+                    const cy = dxfScaleInfo.offsetY - pt.y * dxfScaleInfo.fitScale;
+
+                    const d = Math.hypot(x - cx, y - cy);
+                    if (d < minDistance) {
+                        minDistance = d;
+                        activeSnappedPoint = { x: cx, y: cy, cadX: pt.x, cadY: pt.y, type: pt.type };
+                    }
+                });
+
+                if (activeSnappedPoint) {
+                    x = activeSnappedPoint.x;
+                    y = activeSnappedPoint.y;
+                }
+            }
+
+            return { x, y };
+        }
+
+        // --- DELETE / EDITING HELPERS ---
+        function pointToSegmentDistance(p, a, b) {
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            if (dx === 0 && dy === 0) return Math.hypot(p.x - a.x, p.y - a.y);
+            const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy)));
+            const proj = { x: a.x + t * dx, y: a.y + t * dy };
+            return Math.hypot(p.x - proj.x, p.y - proj.y);
+        }
+
+        function findTakeoffAtPoint(p) {
+            const pointThreshold = 18;
+            const pathThreshold = 9;
+            let bestHit = null;
+            let bestDistance = Infinity;
+            takeoffs.forEach(item => {
+                if (pdfDoc && item.page !== pageNum) return;
+                if (item.type === 'point') {
+                    const pt = item.points[0];
+                    const d = Math.hypot(p.x - pt.x, p.y - pt.y);
+                    if (d <= pointThreshold && d < bestDistance) {
+                        bestDistance = d;
+                        bestHit = item;
+                    }
+                } else if (item.type === 'path' && item.points.length > 1) {
+                    for (let i = 0; i < item.points.length - 1; i++) {
+                        const d = pointToSegmentDistance(p, item.points[i], item.points[i + 1]);
+                        if (d <= pathThreshold && d < bestDistance) {
+                            bestDistance = d;
+                            bestHit = item;
+                        }
+                    }
+                    // Make path vertices easy to remove even when clicking directly on a node.
+                    item.points.forEach(pt => {
+                        const d = Math.hypot(p.x - pt.x, p.y - pt.y);
+                        if (d <= pointThreshold && d < bestDistance) {
+                            bestDistance = d;
+                            bestHit = item;
+                        }
+                    });
+                }
+            });
+            return bestHit;
+        }
+
+        function deleteTakeoffById(takeoffId) {
+            const beforeCount = takeoffs.length;
+            takeoffs = takeoffs.filter(t => t.id !== takeoffId);
+            if (takeoffs.length !== beforeCount) {
+                activeSnappedPoint = null;
+                renderMaterialsList();
+                renderTakeoffTable();
+                redrawFG();
+            }
+        }
+
+        function drawDeleteHoverCue() {
+            if (currentMode !== 'delete' || !tempMousePos) return;
+            const hit = findTakeoffAtPoint(tempMousePos);
+            if (!hit) return;
+            ctxFg.save();
+            ctxFg.strokeStyle = varColor('--color-danger');
+            ctxFg.fillStyle = varColor('--color-danger');
+            ctxFg.lineWidth = 3;
+            ctxFg.setLineDash([6, 4]);
+            if (hit.type === 'point') {
+                const p = hit.points[0];
+                ctxFg.beginPath();
+                ctxFg.arc(p.x, p.y, 22, 0, 2 * Math.PI);
+                ctxFg.stroke();
+                ctxFg.setLineDash([]);
+                ctxFg.font = 'bold 18px Inter';
+                ctxFg.textAlign = 'center';
+                ctxFg.textBaseline = 'middle';
+                ctxFg.fillText('×', p.x, p.y);
+            } else if (hit.type === 'path') {
+                ctxFg.beginPath();
+                ctxFg.moveTo(hit.points[0].x, hit.points[0].y);
+                for (let i = 1; i < hit.points.length; i++) {
+                    ctxFg.lineTo(hit.points[i].x, hit.points[i].y);
+                }
+                ctxFg.stroke();
+                ctxFg.setLineDash([]);
+                hit.points.forEach(p => {
+                    ctxFg.beginPath();
+                    ctxFg.arc(p.x, p.y, 7, 0, 2 * Math.PI);
+                    ctxFg.stroke();
+                });
+            }
+            ctxFg.restore();
+        }
+
+        // --- EQUIPMENT SYMBOL RENDERING ENGINE ---
+        function drawEquipmentSymbol(ctx, x, y, symbol, color, size) {
+            const s = size || 14;
+            ctx.save();
+            ctx.translate(x, y);
+
+            switch (symbol) {
+                case 'wap': // Wireless Access Point — circle with radio wave arcs
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, s * 0.45, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    // Radio wave arcs
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 1.8;
+                    ctx.setLineDash([]);
+                    for (let i = 1; i <= 3; i++) {
+                        ctx.beginPath();
+                        ctx.arc(0, 0, s * 0.45 + i * (s * 0.22), -Math.PI * 0.4, Math.PI * 0.4);
+                        ctx.stroke();
+                    }
+                    // Antenna dot
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, s * 0.15, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                case 'outlet': { // Data Outlet — rectangle with RJ45 jack symbol
+                    ctx.fillStyle = color;
+                    ctx.fillRect(-s * 0.5, -s * 0.5, s, s);
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeRect(-s * 0.5, -s * 0.5, s, s);
+                    // RJ45 inner rectangle
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(-s * 0.25, -s * 0.3, s * 0.5, s * 0.35);
+                    // Contact pins
+                    ctx.fillStyle = color;
+                    const pins = 4;
+                    const pinW = s * 0.08;
+                    const pinGap = s * 0.5 / (pins + 1);
+                    for (let i = 1; i <= pins; i++) {
+                        ctx.fillRect(-s * 0.25 + i * pinGap - pinW / 2, -s * 0.25, pinW, s * 0.2);
+                    }
+                    // Cable tail
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(0, s * 0.05);
+                    ctx.lineTo(0, s * 0.55);
+                    ctx.stroke();
+                    break;
+                }
+
+                case 'handhole': { // Handhole / Manhole — octagon with cross
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    const oct = s * 0.55;
+                    const cut = oct * 0.38;
+                    ctx.moveTo(-oct + cut, -oct);
+                    ctx.lineTo(oct - cut, -oct);
+                    ctx.lineTo(oct, -oct + cut);
+                    ctx.lineTo(oct, oct - cut);
+                    ctx.lineTo(oct - cut, oct);
+                    ctx.lineTo(-oct + cut, oct);
+                    ctx.lineTo(-oct, oct - cut);
+                    ctx.lineTo(-oct, -oct + cut);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    // Cross inside
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(-s * 0.25, -s * 0.25);
+                    ctx.lineTo(s * 0.25, s * 0.25);
+                    ctx.moveTo(s * 0.25, -s * 0.25);
+                    ctx.lineTo(-s * 0.25, s * 0.25);
+                    ctx.stroke();
+                    break;
+                }
+
+                case 'closure': { // Splice Closure — rounded rect with splice lines
+                    const rw = s * 0.7, rh = s * 0.45, rr = s * 0.1;
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(-rw + rr, -rh);
+                    ctx.arcTo(rw, -rh, rw, rh, rr);
+                    ctx.arcTo(rw, rh, -rw, rh, rr);
+                    ctx.arcTo(-rw, rh, -rw, -rh, rr);
+                    ctx.arcTo(-rw, -rh, rw, -rh, rr);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    // Internal splice lines
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(-rw * 0.5, 0);
+                    ctx.lineTo(rw * 0.5, 0);
+                    ctx.moveTo(0, -rh * 0.6);
+                    ctx.lineTo(0, rh * 0.6);
+                    ctx.stroke();
+                    // Entry/exit pipes
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(-rw - s * 0.2, 0);
+                    ctx.lineTo(-rw, 0);
+                    ctx.moveTo(rw, 0);
+                    ctx.lineTo(rw + s * 0.2, 0);
+                    ctx.stroke();
+                    break;
+                }
+
+                case 'rack': // Equipment Rack — tall rectangle with shelves
+                    ctx.fillStyle = color;
+                    ctx.fillRect(-s * 0.35, -s * 0.6, s * 0.7, s * 1.2);
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeRect(-s * 0.35, -s * 0.6, s * 0.7, s * 1.2);
+                    // Rack unit shelves
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1;
+                    for (let i = 1; i <= 3; i++) {
+                        const yy = -s * 0.6 + i * (s * 1.2 / 4);
+                        ctx.beginPath();
+                        ctx.moveTo(-s * 0.3, yy);
+                        ctx.lineTo(s * 0.3, yy);
+                        ctx.stroke();
+                    }
+                    // LED dots
+                    ctx.fillStyle = '#10b981';
+                    for (let i = 1; i <= 3; i++) {
+                        const yy = -s * 0.6 + i * (s * 1.2 / 4) - s * 0.12;
+                        ctx.beginPath();
+                        ctx.arc(s * 0.18, yy, s * 0.05, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    break;
+
+                case 'camera': // CCTV — lens body with mount arm
+                    // Mount arm
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -s * 0.5);
+                    ctx.lineTo(0, -s * 0.15);
+                    ctx.stroke();
+                    // Camera body (trapezoid lens)
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(-s * 0.45, -s * 0.15);
+                    ctx.lineTo(s * 0.45, -s * 0.15);
+                    ctx.lineTo(s * 0.3, s * 0.35);
+                    ctx.lineTo(-s * 0.3, s * 0.35);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    // Lens circle
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(0, s * 0.08, s * 0.15, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(0, s * 0.08, s * 0.08, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                case 'speaker': // PA Speaker — diamond with inner circle
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -s * 0.55);
+                    ctx.lineTo(s * 0.55, 0);
+                    ctx.lineTo(0, s * 0.55);
+                    ctx.lineTo(-s * 0.55, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    // Inner circle (speaker cone)
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, s * 0.22, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, s * 0.08, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                case 'triangle': // Warning / Generic Triangle Marker
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -s * 0.55);
+                    ctx.lineTo(s * 0.55, s * 0.4);
+                    ctx.lineTo(-s * 0.55, s * 0.4);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    // Exclamation
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = `bold ${Math.round(s * 0.5)}px Inter`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('!', 0, s * 0.08);
+                    break;
+
+                case 'circle': // Generic Circle (default)
+                default:
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, s * 0.45, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    // Outer glow ring
+                    ctx.beginPath();
+                    ctx.arc(0, 0, s * 0.75, 0, Math.PI * 2);
+                    ctx.strokeStyle = color + '44';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    break;
+            }
+
+            ctx.restore();
+        }
+
+        function updateSymbolPreview() {
+            const previewCanvas = document.getElementById('mat-symbol-preview');
+            if (!previewCanvas) return;
+            const pctx = previewCanvas.getContext('2d');
+            const sym = document.getElementById('mat-symbol').value;
+            const col = document.getElementById('mat-color').value;
+            pctx.clearRect(0, 0, 48, 48);
+            drawEquipmentSymbol(pctx, 24, 24, sym, col, 28);
+        }
+
+        // --- DRAW LAYER REDRAWING ---
+        function redrawFG() {
+            ctxFg.clearRect(0, 0, canvasFg.width, canvasFg.height);
+
+            // 0. Draw Object Snapping Indicator
+            if (activeSnappedPoint) {
+                ctxFg.strokeStyle = '#10b981'; // Green snapping box
+                ctxFg.lineWidth = 2;
+                ctxFg.strokeRect(activeSnappedPoint.x - 6, activeSnappedPoint.y - 6, 12, 12);
+                
+                ctxFg.fillStyle = '#10b981';
+                ctxFg.font = 'bold 9px Inter';
+                ctxFg.fillText(activeSnappedPoint.type.toUpperCase(), activeSnappedPoint.x + 10, activeSnappedPoint.y + 3);
+            }
+
+            // 1. Draw completed takeoffs
+            takeoffs.forEach(item => {
+                if (pdfDoc && item.page !== pageNum) return;
+
+                const material = materials.find(m => m.id === item.materialId);
+                if (!material) return;
+
+                ctxFg.fillStyle = material.color;
+                ctxFg.strokeStyle = material.color;
+                ctxFg.lineWidth = 3;
+
+                if (item.type === 'point') {
+                    const p = item.points[0];
+                    const sym = material.symbol || 'circle';
+                    drawEquipmentSymbol(ctxFg, p.x, p.y, sym, material.color, 18);
+                } else if (item.type === 'path') {
+                    ctxFg.beginPath();
+                    ctxFg.moveTo(item.points[0].x, item.points[0].y);
+                    for (let i = 1; i < item.points.length; i++) {
+                        ctxFg.lineTo(item.points[i].x, item.points[i].y);
+                    }
+                    ctxFg.stroke();
+
+                    item.points.forEach(p => {
+                        ctxFg.beginPath();
+                        ctxFg.arc(p.x, p.y, 4, 0, 2 * Math.PI);
+                        ctxFg.fillStyle = '#ffffff';
+                        ctxFg.fill();
+                        ctxFg.strokeStyle = material.color;
+                        ctxFg.lineWidth = 2;
+                        ctxFg.stroke();
+                    });
+
+                    // Draw path length label on canvas
+                    const vals = calculateTakeoffItemValues(item, material);
+                    let totalPx = 0;
+                    for (let s = 0; s < item.points.length - 1; s++) {
+                        totalPx += Math.hypot(item.points[s+1].x - item.points[s].x, item.points[s+1].y - item.points[s].y);
+                    }
+
+                    const pMid = item.points[0];
+                    ctxFg.fillStyle = '#1e293b';
+                    ctxFg.font = 'bold 11px Inter';
+                    const takeoffVal = calibration.pixelsPerUnit ? vals.takeoffLength : 0;
+                    const labelText = calibration.pixelsPerUnit 
+                        ? `${takeoffVal.toFixed(1)} ${calibration.unit}` 
+                        : `${Math.round(totalPx)} px (Uncalibrated)`;
+                    
+                    const textWidth = ctxFg.measureText(labelText).width;
+                    
+                    ctxFg.fillRect(pMid.x - textWidth/2 - 4, pMid.y - 20, textWidth + 8, 16);
+                    ctxFg.strokeStyle = material.color;
+                    ctxFg.lineWidth = 1;
+                    ctxFg.strokeRect(pMid.x - textWidth/2 - 4, pMid.y - 20, textWidth + 8, 16);
+                    
+                    ctxFg.fillStyle = '#ffffff';
+                    ctxFg.fillText(labelText, pMid.x - textWidth/2, pMid.y - 8);
+                }
+            });
+
+            // 1b. Highlight the takeoff under the cursor in Delete Mode
+            drawDeleteHoverCue();
+
+            // 2. Draw temporary active calibration line
+            if (currentMode === 'calibrate' && calibration.tempStart && calibration.tempEnd) {
+                ctxFg.strokeStyle = varColor('--color-accent');
+                ctxFg.lineWidth = 3;
+                ctxFg.setLineDash([6, 4]);
+                ctxFg.beginPath();
+                ctxFg.moveTo(calibration.tempStart.x, calibration.tempStart.y);
+                ctxFg.lineTo(calibration.tempEnd.x, calibration.tempEnd.y);
+                ctxFg.stroke();
+                ctxFg.setLineDash([]); 
+
+                const pxDist = Math.hypot(calibration.tempEnd.x - calibration.tempStart.x, calibration.tempEnd.y - calibration.tempStart.y);
+                ctxFg.fillStyle = '#1e293b';
+                ctxFg.font = 'bold 11px Inter';
+                const labelText = `${Math.round(pxDist)} px`;
+                const textWidth = ctxFg.measureText(labelText).width;
+                ctxFg.fillRect(calibration.tempEnd.x + 10, calibration.tempEnd.y - 20, textWidth + 8, 16);
+                ctxFg.strokeStyle = varColor('--color-accent');
+                ctxFg.strokeRect(calibration.tempEnd.x + 10, calibration.tempEnd.y - 20, textWidth + 8, 16);
+                ctxFg.fillStyle = '#ffffff';
+                ctxFg.fillText(labelText, calibration.tempEnd.x + 14, calibration.tempEnd.y - 8);
+            }
+
+            // 3. Draw active cable path drawing
+            if (currentMode === 'path' && activeDrawingPath.length > 0) {
+                const activeMat = materials.find(m => m.id === activeMaterialId);
+                ctxFg.strokeStyle = activeMat ? activeMat.color : '#ffffff';
+                ctxFg.lineWidth = 3;
+                
+                ctxFg.beginPath();
+                ctxFg.moveTo(activeDrawingPath[0].x, activeDrawingPath[0].y);
+                let totalPx = 0;
+                for (let i = 1; i < activeDrawingPath.length; i++) {
+                    ctxFg.lineTo(activeDrawingPath[i].x, activeDrawingPath[i].y);
+                    totalPx += Math.hypot(activeDrawingPath[i].x - activeDrawingPath[i-1].x, activeDrawingPath[i].y - activeDrawingPath[i-1].y);
+                }
+                
+                if (tempMousePos) {
+                    ctxFg.lineTo(tempMousePos.x, tempMousePos.y);
+                    totalPx += Math.hypot(tempMousePos.x - activeDrawingPath[activeDrawingPath.length-1].x, tempMousePos.y - activeDrawingPath[activeDrawingPath.length-1].y);
+                }
+                ctxFg.stroke();
+
+                if (tempMousePos) {
+                    ctxFg.fillStyle = '#1e293b';
+                    ctxFg.font = 'bold 11px Inter';
+                    
+                    let lengthVal = 0;
+                    if (calibration.pixelsPerUnit) {
+                        const tempItem = {
+                            type: 'path',
+                            points: [...activeDrawingPath, tempMousePos],
+                            materialId: activeMaterialId
+                        };
+                        const vals = calculateTakeoffItemValues(tempItem, activeMat);
+                        lengthVal = vals.takeoffLength;
+                    }
+
+                    const labelText = calibration.pixelsPerUnit 
+                        ? `${lengthVal.toFixed(1)} ${calibration.unit}` 
+                        : `${Math.round(totalPx)} px (Uncalibrated)`;
+                    const textWidth = ctxFg.measureText(labelText).width;
+                    
+                    ctxFg.fillRect(tempMousePos.x + 10, tempMousePos.y - 24, textWidth + 8, 18);
+                    ctxFg.strokeStyle = activeMat ? activeMat.color : '#ffffff';
+                    ctxFg.strokeRect(tempMousePos.x + 10, tempMousePos.y - 24, textWidth + 8, 18);
+                    ctxFg.fillStyle = '#ffffff';
+                    ctxFg.fillText(labelText, tempMousePos.x + 14, tempMousePos.y - 11);
+                }
+
+                activeDrawingPath.forEach(p => {
+                    ctxFg.beginPath();
+                    ctxFg.arc(p.x, p.y, 4, 0, 2 * Math.PI);
+                    ctxFg.fillStyle = '#ffffff';
+                    ctxFg.fill();
+                    ctxFg.strokeStyle = activeMat ? activeMat.color : '#ffffff';
+                    ctxFg.lineWidth = 2;
+                    ctxFg.stroke();
+                });
+            }
+        }
+
+        function varColor(name) {
+            return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        }
+
+        // --- ZOOM & PAN ENGINE ---
+        function setupZoomAndPan() {
+            const zoomIn = document.getElementById('zoom-in');
+            const zoomOut = document.getElementById('zoom-out');
+            const zoomFit = document.getElementById('zoom-fit');
+
+            zoomIn.addEventListener('click', () => changeZoom(0.15));
+            zoomOut.addEventListener('click', () => changeZoom(-0.15));
+            zoomFit.addEventListener('click', () => setZoom(1.0));
+
+            workspace.addEventListener('wheel', (e) => {
+                if (e.ctrlKey) {
+                    e.preventDefault();
+                    const factor = e.deltaY < 0 ? 0.1 : -0.1;
+                    changeZoom(factor);
+                }
+            }, { passive: false });
+        }
+
+        function changeZoom(factor) {
+            setZoom(currentZoom + factor);
+        }
+
+        function setZoom(val) {
+            currentZoom = Math.max(0.2, Math.min(val, 4.0));
+            canvasOuter.style.transform = `scale(${currentZoom})`;
+        }
+
+        // --- KEYBOARD LISTENERS ---
+        function setupKeyboardEscListeners() {
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (currentMode === 'path' && activeDrawingPath.length > 0) {
+                        activeDrawingPath = []; 
+                        redrawFG();
+                    } else {
+                        setMode('pan'); 
+                    }
+                }
+            });
+        }
+
+        // --- TAKEOFF TABLE SUMMARY RENDERING ---
+        function renderTakeoffTable() {
+            takeoffTableBody.innerHTML = '';
+            
+            materials.forEach(m => {
+                const summary = getMaterialSummary(m.id);
+                if (summary.count === 0 && summary.totalTakeoff === 0 && summary.totalPixels === 0) return; 
+
+                const row = document.createElement('tr');
+                const activeUnit = m.type === 'path' ? calibration.unit : 'pcs';
+                
+                let rawValStr = '';
+                let modifiersStr = '';
+                let totalValStr = '';
+
+                if (m.type === 'path') {
+                    if (calibration.pixelsPerUnit) {
+                        rawValStr = `${summary.totalRaw.toFixed(1)} ${activeUnit}`;
+                        
+                        let mods = [];
+                        if (m.isAerial) {
+                            const sagAdded = summary.totalSag - summary.totalRaw;
+                            if (sagAdded > 0.01) {
+                                mods.push(`+${sagAdded.toFixed(1)} ${activeUnit} aerial sag`);
+                            }
+                        }
+                        if (m.waste > 0) {
+                            mods.push(`+${m.waste}% waste`);
+                        }
+                        if (m.slack > 0) {
+                            const totalSlack = summary.count * m.slack;
+                            mods.push(`+${totalSlack.toFixed(1)} ${activeUnit} slack`);
+                        }
+                        modifiersStr = mods.length > 0 ? mods.join(', ') : 'None';
+                        totalValStr = `${summary.totalTakeoff.toFixed(1)}`;
+                    } else {
+                        rawValStr = `${Math.round(summary.totalPixels)} px`;
+                        modifiersStr = 'Uncalibrated';
+                        totalValStr = '--';
+                    }
+                } else {
+                    rawValStr = `${summary.count} markers`;
+                    let mods = [];
+                    if (m.slack > 0) {
+                        mods.push(`+${(summary.count * m.slack).toFixed(1)} ${calibration.unit || 'm'} linked cable pull`);
+                    }
+                    modifiersStr = mods.length > 0 ? mods.join(', ') : 'None';
+                    totalValStr = `${summary.count}`;
+                }
+
+                const layerBadge = m.layer ? `<div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;"><i class="fa-solid fa-layer-group"></i> ${m.layer}</div>` : '';
+
+                row.innerHTML = `
+                    <td>
+                        <strong>${m.name}</strong>
+                        ${layerBadge}
+                    </td>
+                    <td><span class="material-type-tag">${m.type === 'path' ? 'Linear Run' : 'Counter Pin'}</span></td>
+                    <td><span style="display:inline-block; width:20px; height:10px; border-radius:3px; background-color:${m.color}"></span></td>
+                    <td style="color:var(--text-secondary);">${rawValStr}</td>
+                    <td style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">${modifiersStr}</td>
+                    <td style="font-weight: 700; color: var(--color-success); font-size:1.05rem;">${totalValStr}</td>
+                    <td>${m.type === 'path' && !calibration.pixelsPerUnit ? '--' : activeUnit}</td>
+                    <td>
+                        <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem; width:auto; display:inline-flex;" onclick="clearMaterialTakeoffs('${m.id}')">Clear Points</button>
+                    </td>
+                `;
+                takeoffTableBody.appendChild(row);
+            });
+        }
+
+        function clearMaterialTakeoffs(matId) {
+            if (confirm('Remove all placed points/lines for this material?')) {
+                takeoffs = takeoffs.filter(t => t.materialId !== matId);
+                renderMaterialsList();
+                renderTakeoffTable();
+                redrawFG();
+            }
+        }
+
+        // --- EXPORT TO CSV ENGINE ---
+        function exportTakeoffToCSV() {
+            if (takeoffs.length === 0) {
+                alert('No material takeoff data to export.');
+                return;
+            }
+
+            let csvContent = 'data:text/csv;charset=utf-8,';
+            
+            csvContent += 'Antigravity Telecom Material Takeoff Report\r\n';
+            csvContent += `Generated: ${new Date().toLocaleString()}\r\n`;
+            csvContent += `Calibration scale: 1 ${calibration.unit} = ${calibration.pixelsPerUnit ? calibration.pixelsPerUnit.toFixed(2) : 'Not Calibrated'} px\r\n\r\n`;
+            csvContent += 'Material Name,Layer,Type,Raw Measured,Waste & Sag Modifiers,Total Takeoff,Unit,Run Count\r\n';
+
+            materials.forEach(m => {
+                const summary = getMaterialSummary(m.id);
+                if (summary.count === 0 && summary.totalTakeoff === 0 && summary.totalPixels === 0) return;
+
+                const activeUnit = m.type === 'path' ? calibration.unit : 'pcs';
+                let rawVal = '0';
+                let modifiers = '';
+                let totalVal = '0';
+
+                if (m.type === 'path') {
+                    if (calibration.pixelsPerUnit) {
+                        rawVal = summary.totalRaw.toFixed(2);
+                        totalVal = summary.totalTakeoff.toFixed(2);
+                        
+                        let mods = [];
+                        if (m.isAerial) mods.push(`Aerial sag (w=${m.w}kg/m T=${m.T}kg)`);
+                        if (m.waste > 0) mods.push(`+${m.waste}% waste`);
+                        if (m.slack > 0) mods.push(`+${m.slack}m slack/run`);
+                        modifiers = mods.join(' | ');
+                    } else {
+                        rawVal = `${Math.round(summary.totalPixels)} px`;
+                        modifiers = 'Uncalibrated';
+                        totalVal = '--';
+                    }
+                } else {
+                    rawVal = summary.count;
+                    totalVal = summary.count;
+                    if (m.slack > 0) {
+                        modifiers = `+${m.slack}m conduit slack/point`;
+                    } else {
+                        modifiers = 'None';
+                    }
+                }
+
+                csvContent += `"${m.name}","${m.layer || ''}","${m.type === 'path' ? 'Linear' : 'Count'}",${rawVal},"${modifiers}",${totalVal},"${activeUnit}",${summary.count}\r\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', `Telecom_Takeoff_Report_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- MODAL UTILITIES ---
+        function showModal(modal) {
+            modal.classList.add('active');
+        }
+        function hideModal(modal) {
+            modal.classList.remove('active');
+        }
+    </script>
+</body>
+</html>
