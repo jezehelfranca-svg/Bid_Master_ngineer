@@ -1,0 +1,31 @@
+{
+  "version": "1.0",
+  "units": "metric",
+  "materials": [
+    {
+      "id": "backbone-fiber",
+      "name": "Backbone Fiber Cable",
+      "type": "path",
+      "color": "#ec4899",
+      "unit": "m",
+      "layer": "U-TC-CABL-OSP",
+      "waste": 10,
+      "slack": 5,
+      "isAerial": true,
+      "w": 0.2,
+      "T": 500,
+      "symbol": "circle"
+    },
+    {
+      "id": "wap",
+      "name": "Wireless Access Point",
+      "type": "point",
+      "color": "#f59e0b",
+      "unit": "pcs",
+      "layer": "E-TC-EQUP-WAP",
+      "waste": 0,
+      "slack": 3,
+      "symbol": "wap"
+    }
+  ]
+}
