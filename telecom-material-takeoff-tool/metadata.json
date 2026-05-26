@@ -1,0 +1,6 @@
+{
+  "name": "Telecom Material Takeoff Tool",
+  "description": "An interactive digital planning and Material Takeoff (MTO) sheet application with drawing, calibration scale tools, and point/polyline placement.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
