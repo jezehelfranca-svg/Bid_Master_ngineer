@@ -1,5 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Diamond shape -->
+  <polygon points="32,4 60,32 32,60 4,32" fill="none" stroke="currentColor"/>
+  <!-- Speaker cone circle -->
+  <circle cx="32" cy="32" r="8" fill="none" stroke="currentColor" stroke-width="3"/>
+  <!-- Center dot -->
+  <circle cx="32" cy="32" r="3" fill="currentColor" stroke="none"/>
 </svg>

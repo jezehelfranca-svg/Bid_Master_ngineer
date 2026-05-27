@@ -1,4 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
-  <polygon points="12 4 4 18 20 18"/>
-  <line x1="12" y1="4" x2="12" y2="18"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Upward-pointing equilateral triangle -->
+  <polygon points="32,6 4,54 60,54" fill="none" stroke="currentColor"/>
+  <!-- Bold letters VD -->
+  <text x="32" y="43" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="18" fill="currentColor" stroke="none">VD</text>
 </svg>

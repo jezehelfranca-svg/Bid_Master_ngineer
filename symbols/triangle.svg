@@ -1,5 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
-  <polygon points="12 3 2 21 22 21 12 3"/>
-  <line x1="12" y1="9" x2="12" y2="15"/>
-  <circle cx="12" cy="18" r="1" fill="currentColor" stroke="none"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Upward-pointing equilateral triangle -->
+  <polygon points="32,6 4,54 60,54" fill="none" stroke="currentColor"/>
+  <!-- Exclamation mark: vertical line -->
+  <line x1="32" y1="22" x2="32" y2="38" stroke="currentColor" stroke-width="4"/>
+  <!-- Exclamation mark: dot -->
+  <circle cx="32" cy="46" r="3" fill="currentColor" stroke="none"/>
 </svg>

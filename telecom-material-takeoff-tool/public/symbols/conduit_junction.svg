@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Junction box (square) -->
+  <rect x="16" y="16" width="32" height="32" fill="none" stroke="currentColor"/>
+  <!-- Lines extending from all four sides -->
+  <line x1="32" y1="0" x2="32" y2="16" stroke="currentColor" stroke-width="4"/>
+  <line x1="32" y1="48" x2="32" y2="64" stroke="currentColor" stroke-width="4"/>
+  <line x1="0" y1="32" x2="16" y2="32" stroke="currentColor" stroke-width="4"/>
+  <line x1="48" y1="32" x2="64" y2="32" stroke="currentColor" stroke-width="4"/>
+  <!-- Cross inside the box -->
+  <line x1="16" y1="32" x2="48" y2="32" stroke="currentColor" stroke-width="2.5"/>
+  <line x1="32" y1="16" x2="32" y2="48" stroke="currentColor" stroke-width="2.5"/>
+</svg>

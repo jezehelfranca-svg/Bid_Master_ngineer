@@ -974,11 +974,29 @@
                             <option value="tia_telecom_room">TIA Telecom Room (TR)</option>
                             <option value="tia_patch_panel">TIA Patch Panel</option>
                             <option value="tia_card_reader">TIA Card Reader</option>
+                            <option value="fiber_splice">Fiber Splice Point</option>
+                            <option value="conduit_junction">Conduit Junction Box</option>
+                            <option value="antenna">Antenna / Tower</option>
+                            <option value="ups_battery">UPS / Battery Backup</option>
+                            <option value="fire_alarm">Fire Alarm Pull Station</option>
+                            <option value="intercom">Intercom Station</option>
+                            <option value="grounding">Grounding Point</option>
+                        </optgroup>
+                        <optgroup label="Custom Imported SVGs" id="custom-svg-optgroup">
                         </optgroup>
                     </select>
+                    <div style="display:flex; gap:6px; margin-top:6px;">
+                        <button type="button" class="btn" id="btn-import-svg" style="font-size:0.78rem; padding:4px 10px;">
+                            <i class="fa-solid fa-file-import"></i> Import SVG Symbol
+                        </button>
+                        <button type="button" class="btn" id="btn-clear-custom-svgs" style="font-size:0.78rem; padding:4px 10px; color:var(--color-error);" title="Remove all custom imported SVGs">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                        <input type="file" id="svg-import-input" accept=".svg,image/svg+xml" multiple style="display:none;">
+                    </div>
                 </div>
                 <div class="form-group" style="display:flex; align-items:flex-end;">
-                    <canvas id="mat-symbol-preview" width="48" height="48" style="border:1px solid var(--border-subtle); border-radius:var(--radius-md); background:#1e293b;"></canvas>
+                    <canvas id="mat-symbol-preview" width="64" height="64" style="border:1px solid var(--border-subtle); border-radius:var(--radius-md); background:#1e293b;"></canvas>
                 </div>
             </div>
 
@@ -1071,7 +1089,7 @@
         let activeDrawingPath = []; // Current line nodes
         let tempMousePos = null;
         let orthoEnabled = false; // Ortho mode toggle
-        let rawMousePos = null; // Un-ortho, un-snapped raw coordinate position
+        let rawMousePos = null; // Un-ortho, un-snapped raw coordinate position\r\n        let customSvgSymbols = []; // { key, name, dataUrl } — user-imported SVG symbols
 
         // UI references
         const fileInput = document.getElementById('file-input');
@@ -1168,6 +1186,16 @@
             
             // Listeners for unit updates
             document.getElementById('mat-unit-select').addEventListener('change', updateModalFieldVisibilities);
+
+            // Hook SVG import controls
+            document.getElementById('btn-import-svg').addEventListener('click', () => {
+                document.getElementById('svg-import-input').click();
+            });
+            document.getElementById('svg-import-input').addEventListener('change', handleSvgImport);
+            document.getElementById('btn-clear-custom-svgs').addEventListener('click', clearCustomSvgs);
+
+            // Restore any previously imported custom SVGs from localStorage
+            restoreCustomSvgsFromStorage();
         });
 
         // --- EVENT HANDLERS: FILE MANAGEMENT ---
@@ -3130,7 +3158,7 @@ EOF`;
                 ctxFg.stroke();
                 ctxFg.setLineDash([]);
                 hit.points.forEach(p => {
-                    ctxFg.beginPath();
+                ctxFg.beginPath();
                     ctxFg.arc(p.x, p.y, 7, 0, 2 * Math.PI);
                     ctxFg.stroke();
                 });
@@ -3148,7 +3176,14 @@ EOF`;
             tia_floor_box: 'symbols/tia_floor_box.svg',
             tia_telecom_room: 'symbols/tia_telecom_room.svg',
             tia_patch_panel: 'symbols/tia_patch_panel.svg',
-            tia_card_reader: 'symbols/tia_card_reader.svg'
+            tia_card_reader: 'symbols/tia_card_reader.svg',
+            fiber_splice: 'symbols/fiber_splice.svg',
+            conduit_junction: 'symbols/conduit_junction.svg',
+            antenna: 'symbols/antenna.svg',
+            ups_battery: 'symbols/ups_battery.svg',
+            fire_alarm: 'symbols/fire_alarm.svg',
+            intercom: 'symbols/intercom.svg',
+            grounding: 'symbols/grounding.svg'
         };
 
         for (const [key, path] of Object.entries(svgPaths)) {
@@ -3159,6 +3194,121 @@ EOF`;
                 updateSymbolPreview();
             };
             svgCache[key] = img;
+        }
+
+        // --- CUSTOM SVG IMPORT SYSTEM ---
+        function loadCustomSvgIntoCache(key, dataUrl) {
+            const img = new Image();
+            img.src = dataUrl;
+            img.onload = () => {
+                redrawFG();
+                updateSymbolPreview();
+            };
+            svgCache[key] = img;
+        }
+
+        function addCustomSvgToDropdown(key, name) {
+            const optgroup = document.getElementById('custom-svg-optgroup');
+            if (!optgroup) return;
+            // Avoid duplicates
+            if (optgroup.querySelector(`option[value="${key}"]`)) return;
+            const opt = document.createElement('option');
+            opt.value = key;
+            opt.textContent = name;
+            optgroup.appendChild(opt);
+        }
+
+        function saveCustomSvgsToStorage() {
+            try {
+                localStorage.setItem('custom-svg-symbols', JSON.stringify(customSvgSymbols));
+            } catch (e) {
+                console.warn('Could not save custom SVGs to localStorage:', e);
+            }
+        }
+
+        function restoreCustomSvgsFromStorage() {
+            try {
+                const stored = localStorage.getItem('custom-svg-symbols');
+                if (!stored) return;
+                customSvgSymbols = JSON.parse(stored);
+                customSvgSymbols.forEach(sym => {
+                    loadCustomSvgIntoCache(sym.key, sym.dataUrl);
+                    addCustomSvgToDropdown(sym.key, sym.name);
+                });
+            } catch (e) {
+                console.warn('Could not restore custom SVGs from localStorage:', e);
+            }
+        }
+
+        function handleSvgImport(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            let importedCount = 0;
+            Array.from(files).forEach(file => {
+                if (!file.type.includes('svg') && !file.name.endsWith('.svg')) return;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const dataUrl = e.target.result;
+                    const baseName = file.name.replace(/\.svg$/i, '').replace(/[^a-zA-Z0-9_-]/g, '_');
+                    const key = 'custom_' + baseName + '_' + Date.now();
+                    const displayName = baseName.replace(/_/g, ' ');
+
+                    // Cache in memory
+                    loadCustomSvgIntoCache(key, dataUrl);
+
+                    // Add to dropdown
+                    addCustomSvgToDropdown(key, displayName);
+
+                    // Track and persist
+                    customSvgSymbols.push({ key, name: displayName, dataUrl });
+                    saveCustomSvgsToStorage();
+
+                    // Select the newly imported symbol
+                    document.getElementById('mat-symbol').value = key;
+                    updateSymbolPreview();
+
+                    importedCount++;
+                    if (importedCount === files.length) {
+                        helpBannerText.innerText = `Imported ${importedCount} custom SVG symbol(s) successfully.`;
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // Reset input so same file can be re-imported
+            event.target.value = '';
+        }
+
+        function clearCustomSvgs() {
+            if (customSvgSymbols.length === 0) {
+                alert('No custom SVG symbols to clear.');
+                return;
+            }
+            if (!confirm(`Remove all ${customSvgSymbols.length} custom imported SVG symbol(s)?\n\nNote: Materials that use these symbols will fall back to the default circle.`)) return;
+
+            // Remove from cache
+            customSvgSymbols.forEach(sym => {
+                delete svgCache[sym.key];
+            });
+
+            // Clear optgroup
+            const optgroup = document.getElementById('custom-svg-optgroup');
+            if (optgroup) optgroup.innerHTML = '';
+
+            // Clear state and storage
+            customSvgSymbols = [];
+            saveCustomSvgsToStorage();
+
+            // Reset dropdown selection if custom was selected
+            const currentVal = document.getElementById('mat-symbol').value;
+            if (currentVal.startsWith('custom_')) {
+                document.getElementById('mat-symbol').value = 'circle';
+            }
+            updateSymbolPreview();
+            redrawFG();
+            helpBannerText.innerText = 'All custom SVG symbols removed.';
         }
 
         // --- EQUIPMENT SYMBOL RENDERING ENGINE ---
@@ -3501,8 +3651,8 @@ EOF`;
             const pctx = previewCanvas.getContext('2d');
             const sym = document.getElementById('mat-symbol').value;
             const col = document.getElementById('mat-color').value;
-            pctx.clearRect(0, 0, 48, 48);
-            drawEquipmentSymbol(pctx, 24, 24, sym, col, 28);
+            pctx.clearRect(0, 0, 64, 64);
+            drawEquipmentSymbol(pctx, 32, 32, sym, col, 36);
         }
 
         // --- DRAW LAYER REDRAWING ---
@@ -3534,7 +3684,7 @@ EOF`;
                 if (item.type === 'point') {
                     const p = item.points[0];
                     const sym = material.symbol || 'circle';
-                    drawEquipmentSymbol(ctxFg, p.x, p.y, sym, material.color, 18);
+                    drawEquipmentSymbol(ctxFg, p.x, p.y, sym, material.color, 24);
                 } else if (item.type === 'path') {
                     ctxFg.beginPath();
                     ctxFg.moveTo(item.points[0].x, item.points[0].y);

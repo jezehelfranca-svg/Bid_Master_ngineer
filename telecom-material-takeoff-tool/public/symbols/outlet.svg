@@ -1,5 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-  <rect x="4" y="4" width="16" height="16" rx="2" ry="2"/>
-  <path d="M8 10h8v4H8z"/>
-  <path d="M10 14v2h4v-2"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Outer square (faceplate) -->
+  <rect x="8" y="8" width="48" height="48" rx="3" ry="3" fill="none" stroke="currentColor"/>
+  <!-- RJ45 jack (small rectangle in upper portion) -->
+  <rect x="20" y="16" width="24" height="16" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="3"/>
+  <!-- RJ45 contact pins -->
+  <line x1="25" y1="18" x2="25" y2="26" stroke="currentColor" stroke-width="1.5"/>
+  <line x1="29" y1="18" x2="29" y2="26" stroke="currentColor" stroke-width="1.5"/>
+  <line x1="33" y1="18" x2="33" y2="26" stroke="currentColor" stroke-width="1.5"/>
+  <line x1="37" y1="18" x2="37" y2="26" stroke="currentColor" stroke-width="1.5"/>
+  <!-- Cable line below -->
+  <line x1="32" y1="32" x2="32" y2="50" stroke="currentColor" stroke-width="3"/>
 </svg>

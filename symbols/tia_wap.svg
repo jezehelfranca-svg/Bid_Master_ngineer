@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
-  <rect x="3" y="6" width="18" height="12" rx="1"/>
-  <text x="12" y="14" font-size="7" font-family="sans-serif" text-anchor="middle" font-weight="bold" fill="currentColor" stroke="none">WAP</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Rounded rectangle body -->
+  <rect x="8" y="20" width="48" height="36" rx="6" ry="6" fill="none" stroke="currentColor"/>
+  <!-- WAP text -->
+  <text x="32" y="44" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="14" fill="currentColor" stroke="none">WAP</text>
+  <!-- Radio wave arcs emanating from top center -->
+  <path d="M26,18 A8,8 0 0,1 38,18" fill="none" stroke="currentColor" stroke-width="2.5"/>
+  <path d="M22,13 A14,14 0 0,1 42,13" fill="none" stroke="currentColor" stroke-width="2.5"/>
+  <path d="M18,8 A20,20 0 0,1 46,8" fill="none" stroke="currentColor" stroke-width="2.5"/>
 </svg>

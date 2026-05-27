@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Vertical line from top -->
+  <line x1="32" y1="4" x2="32" y2="28" stroke="currentColor" stroke-width="4"/>
+  <!-- First (widest) horizontal ground line -->
+  <line x1="12" y1="28" x2="52" y2="28" stroke="currentColor" stroke-width="4"/>
+  <!-- Second horizontal line -->
+  <line x1="18" y1="38" x2="46" y2="38" stroke="currentColor" stroke-width="4"/>
+  <!-- Third (narrowest) horizontal line -->
+  <line x1="24" y1="48" x2="40" y2="48" stroke="currentColor" stroke-width="4"/>
+  <!-- Small point at bottom -->
+  <line x1="30" y1="56" x2="34" y2="56" stroke="currentColor" stroke-width="3"/>
+</svg>

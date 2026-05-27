@@ -1,5 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
-  <rect x="5" y="4" width="14" height="16" rx="2"/>
-  <line x1="5" y1="12" x2="19" y2="12"/>
-  <text x="12" y="10" font-size="5" font-family="sans-serif" text-anchor="middle" font-weight="bold" fill="currentColor" stroke="none">PP</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Horizontal rectangle body -->
+  <rect x="4" y="18" width="56" height="28" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="4"/>
+  <!-- Patch port vertical lines/slots -->
+  <line x1="14" y1="25" x2="14" y2="39" stroke="currentColor" stroke-width="2.5"/>
+  <line x1="22" y1="25" x2="22" y2="39" stroke="currentColor" stroke-width="2.5"/>
+  <line x1="30" y1="25" x2="30" y2="39" stroke="currentColor" stroke-width="2.5"/>
+  <line x1="38" y1="25" x2="38" y2="39" stroke="currentColor" stroke-width="2.5"/>
+  <line x1="46" y1="25" x2="46" y2="39" stroke="currentColor" stroke-width="2.5"/>
+  <line x1="54" y1="25" x2="54" y2="39" stroke="currentColor" stroke-width="2.5"/>
 </svg>
