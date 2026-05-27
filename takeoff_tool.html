@@ -902,12 +902,31 @@
                 <label for="mat-preset">Preset Templates (TIA/EIA / NECA Standards)</label>
                 <select id="mat-preset">
                     <option value="custom">-- Custom Asset (No Preset) --</option>
-                    <option value="backbone-fiber">Backbone Fiber Cable (U-TC-CABL-OSP) - 10% Waste, 5m Slack</option>
-                    <option value="osp-duct">OSP Underground Duct (U-TC-COND-OSP) - 5% Waste</option>
-                    <option value="handhole">Splice Vault / Handhole (U-TC-EQUP-MHHL)</option>
-                    <option value="closure">Splice Closure / Cabinet (U-TC-EQUP-CLOS) - 5m Slack</option>
-                    <option value="wap">Wireless Access Point (E-TC-EQUP-WAP) - 3m Pull</option>
-                    <option value="outlet">Workstation Data Outlet (E-TC-WALL-OUTL) - 3m Pull</option>
+                    <optgroup label="Network & Cabling">
+                        <option value="backbone-fiber">Backbone Fiber Cable (U-TC-CABL-OSP) - 10% Waste, 5m Slack</option>
+                        <option value="osp-duct">OSP Underground Duct (U-TC-COND-OSP) - 5% Waste</option>
+                        <option value="handhole">Splice Vault / Handhole (U-TC-EQUP-MHHL)</option>
+                        <option value="closure">Splice Closure / Cabinet (U-TC-EQUP-CLOS) - 5m Slack</option>
+                        <option value="wap">Wireless Access Point (E-TC-EQUP-WAP) - 3m Pull</option>
+                        <option value="outlet">Workstation Data Outlet (E-TC-WALL-OUTL) - 3m Pull</option>
+                    </optgroup>
+                    <optgroup label="PAGA & Security Symbols">
+                        <option value="paga_speaker_a">PAGA Loudspeaker - Wall Mounted 'A' (6W)</option>
+                        <option value="paga_speaker_b">PAGA Loudspeaker - Wall Mounted 'B' (6W)</option>
+                        <option value="card_reader_indoor">Card Reader (Indoor)</option>
+                        <option value="card_reader_outdoor">Card Reader (Weather Proof Outdoor)</option>
+                        <option value="door_contact">Door Status Contact</option>
+                        <option value="em_lock">Electro Magnetic Lock</option>
+                        <option value="break_glass">Break Glass Unit</option>
+                        <option value="telecom_cabinet">Telecom Cabinet</option>
+                        <option value="indoor_telephone">Indoor IP Telephone</option>
+                        <option value="camera_outdoor">Security Weather Proof Outdoor Dome Camera</option>
+                        <option value="wifi_ap">Wifi Access Point</option>
+                        <option value="camera_indoor">Security Indoor Dome Camera</option>
+                        <option value="card_reader_keyboard">Card Reader with Keyboard (Indoor)</option>
+                        <option value="ceiling_speaker_a">Indoor Ceiling Speaker 'A' (1W)</option>
+                        <option value="ceiling_speaker_b">Indoor Ceiling Speaker 'B' (1W)</option>
+                    </optgroup>
                 </select>
             </div>
 
@@ -2199,7 +2218,22 @@ EOF`;
             'handhole': { name: 'Splice Vault / Handhole', type: 'point', color: '#6366f1', layer: 'U-TC-EQUP-MHHL', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'handhole', unit: 'pcs' },
             'closure': { name: 'Splice Closure / Cabinet', type: 'point', color: '#a855f7', layer: 'U-TC-EQUP-CLOS', waste: 0, slack: 5.0, isAerial: false, w: 0.0, T: 1, symbol: 'closure', unit: 'pcs' },
             'wap': { name: 'Wireless Access Point (AP)', type: 'point', color: '#f59e0b', layer: 'E-TC-EQUP-WAP', waste: 0, slack: 3.0, isAerial: false, w: 0.0, T: 1, symbol: 'wap', unit: 'pcs' },
-            'outlet': { name: 'Workstation Data Outlet', type: 'point', color: '#10b981', layer: 'E-TC-WALL-OUTL', waste: 0, slack: 3.0, isAerial: false, w: 0.0, T: 1, symbol: 'outlet', unit: 'pcs' }
+            'outlet': { name: 'Workstation Data Outlet', type: 'point', color: '#10b981', layer: 'E-TC-WALL-OUTL', waste: 0, slack: 3.0, isAerial: false, w: 0.0, T: 1, symbol: 'outlet', unit: 'pcs' },
+            'paga_speaker_a': { name: 'PAGA LOUDSPEAKER - WALL/STRUCTURE MOUNTED "A" (6W)', type: 'point', color: '#eab308', layer: 'E-PA-EQUP-SPKR', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'paga_speaker_a', unit: 'pcs' },
+            'paga_speaker_b': { name: 'PAGA LOUDSPEAKER - WALL/STRUCTURE MOUNTED "B" (6W)', type: 'point', color: '#eab308', layer: 'E-PA-EQUP-SPKR', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'paga_speaker_b', unit: 'pcs' },
+            'card_reader_indoor': { name: 'CARD READER (INDOOR)', type: 'point', color: '#3b82f6', layer: 'E-SE-EQUP-CARD', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'card_reader_indoor', unit: 'pcs' },
+            'card_reader_outdoor': { name: 'CARD READER (WEATHER PROOF OUTDOOR)', type: 'point', color: '#3b82f6', layer: 'E-SE-EQUP-CARD', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'card_reader_outdoor', unit: 'pcs' },
+            'door_contact': { name: 'DOOR STATUS CONTACT', type: 'point', color: '#2563eb', layer: 'E-SE-EQUP-DOOR', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'door_contact', unit: 'pcs' },
+            'em_lock': { name: 'ELECTRO MAGNETIC LOCK', type: 'point', color: '#1d4ed8', layer: 'E-SE-EQUP-LOCK', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'em_lock', unit: 'pcs' },
+            'break_glass': { name: 'BREAK GLASS UNIT', type: 'point', color: '#ef4444', layer: 'E-SE-EQUP-BGU', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'break_glass', unit: 'pcs' },
+            'telecom_cabinet': { name: 'TELECOM CABINET', type: 'point', color: '#8b5cf6', layer: 'U-TC-EQUP-CABN', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'telecom_cabinet', unit: 'pcs' },
+            'indoor_telephone': { name: 'INDOOR IP TELEPHONE', type: 'point', color: '#06b6d4', layer: 'E-TC-EQUP-PHON', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'indoor_telephone', unit: 'pcs' },
+            'camera_outdoor': { name: 'SECURITY WEATHER PROOF OUTDOOR DOME CAMERA', type: 'point', color: '#14b8a6', layer: 'E-SE-EQUP-CCTV', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'camera_outdoor', unit: 'pcs' },
+            'wifi_ap': { name: 'WIFI ACCESS POINT', type: 'point', color: '#f59e0b', layer: 'E-TC-EQUP-WAP', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'wifi_ap', unit: 'pcs' },
+            'camera_indoor': { name: 'SECURITY INDOOR DOME CAMERA', type: 'point', color: '#14b8a6', layer: 'E-SE-EQUP-CCTV', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'camera_indoor', unit: 'pcs' },
+            'card_reader_keyboard': { name: 'CARD READER WITH KEYBOARD (INDOOR)', type: 'point', color: '#3b82f6', layer: 'E-SE-EQUP-CARD', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'card_reader_keyboard', unit: 'pcs' },
+            'ceiling_speaker_a': { name: 'INDOOR CEILING SPEAKER "A" (1W)', type: 'point', color: '#f59e0b', layer: 'E-PA-EQUP-SPKR', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'ceiling_speaker_a', unit: 'pcs' },
+            'ceiling_speaker_b': { name: 'INDOOR CEILING SPEAKER "B" (1W)', type: 'point', color: '#f59e0b', layer: 'E-PA-EQUP-SPKR', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'ceiling_speaker_b', unit: 'pcs' }
         };
 
         function handlePresetChange(e) {
