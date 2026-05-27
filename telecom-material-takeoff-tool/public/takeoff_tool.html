@@ -1125,7 +1125,8 @@
         let activeDrawingPath = []; // Current line nodes
         let tempMousePos = null;
         let orthoEnabled = false; // Ortho mode toggle
-        let rawMousePos = null; // Un-ortho, un-snapped raw coordinate position\r\n        let customSvgSymbols = []; // { key, name, dataUrl } — user-imported SVG symbols
+        let rawMousePos = null; // Un-ortho, un-snapped raw coordinate position
+        let customSvgSymbols = []; // { key, name, dataUrl } — user-imported SVG symbols
 
         // UI references
         const fileInput = document.getElementById('file-input');
@@ -1198,7 +1199,17 @@
             document.getElementById('mat-preset').addEventListener('change', handlePresetChange);
             document.getElementById('mat-type').addEventListener('change', updateModalFieldVisibilities);
             document.getElementById('mat-aerial').addEventListener('change', updateModalFieldVisibilities);
-            document.getElementById('mat-symbol').addEventListener('change', (e) => {\r\n                updateSymbolPreview();\r\n                const val = e.target.value;\r\n                const nameInput = document.getElementById('mat-name');\r\n                if (SYMBOL_METADATA[val]) {\r\n                    nameInput.value = SYMBOL_METADATA[val];\r\n                } else if (val.startsWith('custom_')) {\r\n                    const found = customSvgSymbols.find(s => s.key === val);\r\n                    if (found) nameInput.value = found.name;\r\n                }\r\n            });
+            document.getElementById('mat-symbol').addEventListener('change', (e) => {
+                updateSymbolPreview();
+                const val = e.target.value;
+                const nameInput = document.getElementById('mat-name');
+                if (SYMBOL_METADATA[val]) {
+                    nameInput.value = SYMBOL_METADATA[val];
+                } else if (val.startsWith('custom_')) {
+                    const found = customSvgSymbols.find(s => s.key === val);
+                    if (found) nameInput.value = found.name;
+                }
+            });
             document.getElementById('mat-color').addEventListener('input', updateSymbolPreview);
 
             // Hook Calibration switches
@@ -3219,7 +3230,65 @@ EOF`;
 
         // --- SVG CACHING ---
         const svgCache = {};
-        const svgPaths = {\r\n            tia_data: 'symbols/tia_data.svg',\r\n            tia_voice: 'symbols/tia_voice.svg',\r\n            tia_voice_data: 'symbols/tia_voice_data.svg',\r\n            tia_wap: 'symbols/tia_wap.svg',\r\n            tia_floor_box: 'symbols/tia_floor_box.svg',\r\n            tia_telecom_room: 'symbols/tia_telecom_room.svg',\r\n            tia_patch_panel: 'symbols/tia_patch_panel.svg',\r\n            tia_card_reader: 'symbols/tia_card_reader.svg',\r\n            fiber_splice: 'symbols/fiber_splice.svg',\r\n            conduit_junction: 'symbols/conduit_junction.svg',\r\n            antenna: 'symbols/antenna.svg',\r\n            ups_battery: 'symbols/ups_battery.svg',\r\n            fire_alarm: 'symbols/fire_alarm.svg',\r\n            intercom: 'symbols/intercom.svg',\r\n            grounding: 'symbols/grounding.svg',\r\n            paga_speaker_a: 'symbols/paga_speaker_a.svg',\r\n            paga_speaker_b: 'symbols/paga_speaker_b.svg',\r\n            card_reader_indoor: 'symbols/card_reader_indoor.svg',\r\n            card_reader_outdoor: 'symbols/card_reader_outdoor.svg',\r\n            door_contact: 'symbols/door_contact.svg',\r\n            em_lock: 'symbols/em_lock.svg',\r\n            break_glass: 'symbols/break_glass.svg',\r\n            telecom_cabinet: 'symbols/telecom_cabinet.svg',\r\n            indoor_telephone: 'symbols/indoor_telephone.svg',\r\n            camera_outdoor: 'symbols/camera_outdoor.svg',\r\n            wifi_ap: 'symbols/wifi_ap.svg',\r\n            camera_indoor: 'symbols/camera_indoor.svg',\r\n            card_reader_keyboard: 'symbols/card_reader_keyboard.svg',\r\n            ceiling_speaker_a: 'symbols/ceiling_speaker_a.svg',\r\n            ceiling_speaker_b: 'symbols/ceiling_speaker_b.svg'\r\n        };\r\n\r\n        const SYMBOL_METADATA = {\r\n            paga_speaker_a: "PAGA LOUDSPEAKER - WALL/STRUCTURE MOUNTED \\"A\\" (6W)",\r\n            paga_speaker_b: "PAGA LOUDSPEAKER - WALL/STRUCTURE MOUNTED \\"B\\" (6W)",\r\n            card_reader_indoor: "CARD READER (INDOOR)",\r\n            card_reader_outdoor: "CARD READER (WEATHER PROOF OUTDOOR)",\r\n            door_contact: "DOOR STATUS CONTACT",\r\n            em_lock: "ELECTRO MAGNETIC LOCK",\r\n            break_glass: "BREAK GLASS UNIT",\r\n            telecom_cabinet: "TELECOM CABINET",\r\n            indoor_telephone: "INDOOR IP TELEPHONE",\r\n            camera_outdoor: "SECURITY WEATHER PROOF OUTDOOR DOME CAMERA",\r\n            wifi_ap: "WIFI ACCESS POINT",\r\n            camera_indoor: "SECURITY INDOOR DOME CAMERA",\r\n            card_reader_keyboard: "CARD READER WITH KEYBOARD (INDOOR)",\r\n            ceiling_speaker_a: "INDOOR CEILING SPEAKER \\"A\\" (1W)",\r\n            ceiling_speaker_b: "INDOOR CEILING SPEAKER \\"B\\" (1W)",\r\n            // Also add standard ones for convenience\r\n            tia_data: "TIA Data Jack",\r\n            tia_voice: "TIA Voice Jack",\r\n            tia_voice_data: "TIA Voice/Data Combo Jack",\r\n            tia_wap: "TIA WAP Outlet",\r\n            tia_floor_box: "TIA Floor Box",\r\n            tia_telecom_room: "TIA Telecom Room Outlet",\r\n            tia_patch_panel: "TIA Patch Panel Unit",\r\n            tia_card_reader: "TIA Card Reader Unit"\r\n        };
+        const svgPaths = {
+            tia_data: 'symbols/tia_data.svg',
+            tia_voice: 'symbols/tia_voice.svg',
+            tia_voice_data: 'symbols/tia_voice_data.svg',
+            tia_wap: 'symbols/tia_wap.svg',
+            tia_floor_box: 'symbols/tia_floor_box.svg',
+            tia_telecom_room: 'symbols/tia_telecom_room.svg',
+            tia_patch_panel: 'symbols/tia_patch_panel.svg',
+            tia_card_reader: 'symbols/tia_card_reader.svg',
+            fiber_splice: 'symbols/fiber_splice.svg',
+            conduit_junction: 'symbols/conduit_junction.svg',
+            antenna: 'symbols/antenna.svg',
+            ups_battery: 'symbols/ups_battery.svg',
+            fire_alarm: 'symbols/fire_alarm.svg',
+            intercom: 'symbols/intercom.svg',
+            grounding: 'symbols/grounding.svg',
+            paga_speaker_a: 'symbols/paga_speaker_a.svg',
+            paga_speaker_b: 'symbols/paga_speaker_b.svg',
+            card_reader_indoor: 'symbols/card_reader_indoor.svg',
+            card_reader_outdoor: 'symbols/card_reader_outdoor.svg',
+            door_contact: 'symbols/door_contact.svg',
+            em_lock: 'symbols/em_lock.svg',
+            break_glass: 'symbols/break_glass.svg',
+            telecom_cabinet: 'symbols/telecom_cabinet.svg',
+            indoor_telephone: 'symbols/indoor_telephone.svg',
+            camera_outdoor: 'symbols/camera_outdoor.svg',
+            wifi_ap: 'symbols/wifi_ap.svg',
+            camera_indoor: 'symbols/camera_indoor.svg',
+            card_reader_keyboard: 'symbols/card_reader_keyboard.svg',
+            ceiling_speaker_a: 'symbols/ceiling_speaker_a.svg',
+            ceiling_speaker_b: 'symbols/ceiling_speaker_b.svg'
+        };
+
+        const SYMBOL_METADATA = {
+            paga_speaker_a: "PAGA LOUDSPEAKER - WALL/STRUCTURE MOUNTED \"A\" (6W)",
+            paga_speaker_b: "PAGA LOUDSPEAKER - WALL/STRUCTURE MOUNTED \"B\" (6W)",
+            card_reader_indoor: "CARD READER (INDOOR)",
+            card_reader_outdoor: "CARD READER (WEATHER PROOF OUTDOOR)",
+            door_contact: "DOOR STATUS CONTACT",
+            em_lock: "ELECTRO MAGNETIC LOCK",
+            break_glass: "BREAK GLASS UNIT",
+            telecom_cabinet: "TELECOM CABINET",
+            indoor_telephone: "INDOOR IP TELEPHONE",
+            camera_outdoor: "SECURITY WEATHER PROOF OUTDOOR DOME CAMERA",
+            wifi_ap: "WIFI ACCESS POINT",
+            camera_indoor: "SECURITY INDOOR DOME CAMERA",
+            card_reader_keyboard: "CARD READER WITH KEYBOARD (INDOOR)",
+            ceiling_speaker_a: "INDOOR CEILING SPEAKER \"A\" (1W)",
+            ceiling_speaker_b: "INDOOR CEILING SPEAKER \"B\" (1W)",
+            // Also add standard ones for convenience
+            tia_data: "TIA Data Jack",
+            tia_voice: "TIA Voice Jack",
+            tia_voice_data: "TIA Voice/Data Combo Jack",
+            tia_wap: "TIA WAP Outlet",
+            tia_floor_box: "TIA Floor Box",
+            tia_telecom_room: "TIA Telecom Room Outlet",
+            tia_patch_panel: "TIA Patch Panel Unit",
+            tia_card_reader: "TIA Card Reader Unit"
+        };
 
         for (const [key, path] of Object.entries(svgPaths)) {
             const img = new Image();
