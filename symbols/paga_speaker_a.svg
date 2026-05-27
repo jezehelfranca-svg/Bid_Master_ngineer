@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Speaker Cone pointing right -->
+  <polygon points="10,24 22,24 38,12 38,52 22,40 10,40" fill="none"/>
+  <!-- Sound waves or badge -->
+  <line x1="44" y1="22" x2="48" y2="18"/>
+  <line x1="44" y1="42" x2="48" y2="46"/>
+  <!-- Bold Letter 'A' -->
+  <text x="50" y="36" font-size="16" font-family="Arial, sans-serif" font-weight="bold" fill="currentColor" stroke="none" text-anchor="middle">A</text>
+</svg>

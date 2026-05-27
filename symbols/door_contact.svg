@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Horizontal rectangle -->
+  <rect x="10" y="20" width="44" height="24" rx="4"/>
+  <!-- Two dots inside -->
+  <circle cx="24" cy="32" r="4" fill="currentColor"/>
+  <circle cx="40" cy="32" r="4" fill="currentColor"/>
+</svg>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Square with diagonal cross -->
+  <rect x="14" y="18" width="36" height="36" />
+  <line x1="14" y1="18" x2="50" y2="54"/>
+  <line x1="50" y1="18" x2="14" y2="54"/>
+  <!-- "WP" text above -->
+  <text x="50" y="14" font-size="12" font-family="Arial, sans-serif" font-weight="bold" fill="currentColor" stroke="none" text-anchor="middle">WP</text>
+</svg>

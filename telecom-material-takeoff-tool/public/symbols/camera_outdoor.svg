@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Dome camera D-shape on side -->
+  <path d="M12,30 A20,20 0 0,0 52,30 Z" fill="none"/>
+  <line x1="12" y1="30" x2="52" y2="30"/>
+  <!-- Camera lens inside -->
+  <circle cx="32" cy="22" r="5" fill="currentColor"/>
+  <!-- WP text -->
+  <text x="32" y="48" font-size="12" font-family="Arial, sans-serif" font-weight="bold" fill="currentColor" stroke="none" text-anchor="middle">WP</text>
+</svg>
