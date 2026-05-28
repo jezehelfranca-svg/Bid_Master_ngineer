@@ -525,7 +525,10 @@
             box-shadow: var(--shadow-lg);
             transform: scale(0.9);
             transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 90vh;
+            overflow-y: auto;
         }
+
         .modal-overlay.active .modal {
             transform: scale(1);
         }
