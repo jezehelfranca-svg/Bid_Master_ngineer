@@ -802,6 +802,7 @@
             <div class="toolbar" id="toolbar">
                 <div class="drag-handle" id="toolbar-drag-handle" tooltip="Drag to Move"><i class="fa-solid fa-grip-vertical"></i></div>
                 <button class="tool-btn active" id="tool-pan" tooltip="Pan & Zoom Mode (ESC)"><i class="fa-solid fa-hand"></i></button>
+                <button class="tool-btn" id="tool-select" tooltip="Select & Edit Symbols (Move/Rotate)"><i class="fa-solid fa-arrow-pointer"></i></button>
                 <button class="tool-btn" id="tool-point" tooltip="Count Placer"><i class="fa-solid fa-location-dot"></i></button>
                 <button class="tool-btn" id="tool-path" tooltip="Linear Measurement"><i class="fa-solid fa-route"></i></button>
                 <button class="tool-btn" id="tool-delete" tooltip="Delete Placed Symbol/Run"><i class="fa-solid fa-eraser"></i></button>
@@ -1127,6 +1128,11 @@
         let orthoEnabled = false; // Ortho mode toggle
         let rawMousePos = null; // Un-ortho, un-snapped raw coordinate position
         let customSvgSymbols = []; // { key, name, dataUrl } — user-imported SVG symbols
+        let selectedTakeoffId = null; // ID of the selected takeoff item
+        let isDraggingSymbol = false; // Dragging state for select mode
+        let isRotatingSymbol = false; // Rotating state for select mode
+        let dragStartOffset = { x: 0, y: 0 }; // Offset from center when dragging starts
+        let rotationCenter = { x: 0, y: 0 }; // Rotation pivot point
 
         // UI references
         const fileInput = document.getElementById('file-input');
@@ -2864,6 +2870,9 @@ EOF`;
             if (mode === 'pan') {
                 document.getElementById('tool-pan').classList.add('active');
                 helpBannerText.innerText = "Navigation Mode: Drag mouse to pan. Ctrl + Scroll to Zoom.";
+            } else if (mode === 'select') {
+                document.getElementById('tool-select').classList.add('active');
+                helpBannerText.innerText = "Select & Edit: Click a symbol to select. Drag symbol to Move; drag top circular handle to Rotate. ESC to clear, DELETE to remove.";
             } else if (mode === 'calibrate') {
                 helpBannerText.innerText = "Calibration: Click start point, drag (or click again) at the end point of a known length.";
             } else if (mode === 'point') {
@@ -2886,6 +2895,8 @@ EOF`;
                 canvasFg.style.cursor = 'grab';
             } else if (mode === 'delete') {
                 canvasFg.style.cursor = 'not-allowed';
+            } else if (mode === 'select') {
+                canvasFg.style.cursor = 'default';
             } else {
                 canvasFg.style.cursor = 'crosshair';
             }
@@ -2903,6 +2914,13 @@ EOF`;
                     return;
                 }
                 setMode('pan');
+            });
+            document.getElementById('tool-select').addEventListener('click', () => {
+                if (!isDrawingLoaded()) {
+                    alert('Please load a drawing file first (PDF, image, or DXF CAD layout).');
+                    return;
+                }
+                setMode('select');
             });
             document.getElementById('tool-point').addEventListener('click', () => {
                 if (!isDrawingLoaded()) {
@@ -2987,6 +3005,40 @@ EOF`;
                 canvasFg.style.cursor = 'grabbing';
                 dragStart = { x: e.clientX, y: e.clientY };
                 scrollStart = { x: workspace.scrollLeft, y: workspace.scrollTop };
+            } else if (currentMode === 'select') {
+                if (selectedTakeoffId) {
+                    const selected = takeoffs.find(t => t.id === selectedTakeoffId);
+                    if (selected && selected.type === 'point') {
+                        const pt = selected.points[0];
+                        const angle = selected.angle || 0;
+                        const hx = pt.x + 35 * Math.sin(angle);
+                        const hy = pt.y - 35 * Math.cos(angle);
+                        
+                        if (Math.hypot(coords.x - hx, coords.y - hy) <= 10) {
+                            isRotatingSymbol = true;
+                            rotationCenter = pt;
+                            return;
+                        }
+                        
+                        if (Math.hypot(coords.x - pt.x, coords.y - pt.y) <= 18) {
+                            isDraggingSymbol = true;
+                            dragStartOffset = { x: coords.x - pt.x, y: coords.y - pt.y };
+                            return;
+                        }
+                    }
+                }
+                
+                const hit = findTakeoffAtPoint(coords);
+                if (hit && hit.type === 'point') {
+                    selectedTakeoffId = hit.id;
+                    const pt = hit.points[0];
+                    isDraggingSymbol = true;
+                    dragStartOffset = { x: coords.x - pt.x, y: coords.y - pt.y };
+                    redrawFG();
+                } else {
+                    selectedTakeoffId = null;
+                    redrawFG();
+                }
             } else if (currentMode === 'calibrate') {
                 if (!calibration.tempStart) {
                     calibration.tempStart = coords;
@@ -3019,7 +3071,8 @@ EOF`;
                     type: 'point',
                     points: [coords],
                     page: pageNum,
-                    physicalValue: 1
+                    physicalValue: 1,
+                    angle: 0
                 });
                 renderMaterialsList();
                 renderTakeoffTable();
@@ -3061,6 +3114,20 @@ EOF`;
                 const dy = e.clientY - dragStart.y;
                 workspace.scrollLeft = scrollStart.x - dx;
                 workspace.scrollTop = scrollStart.y - dy;
+            } else if (isDraggingSymbol && selectedTakeoffId) {
+                const selected = takeoffs.find(t => t.id === selectedTakeoffId);
+                if (selected && selected.type === 'point') {
+                    selected.points[0] = { x: coords.x - dragStartOffset.x, y: coords.y - dragStartOffset.y };
+                    redrawFG();
+                }
+            } else if (isRotatingSymbol && selectedTakeoffId) {
+                const selected = takeoffs.find(t => t.id === selectedTakeoffId);
+                if (selected && selected.type === 'point') {
+                    const dx = coords.x - rotationCenter.x;
+                    const dy = coords.y - rotationCenter.y;
+                    selected.angle = Math.atan2(dx, -dy);
+                    redrawFG();
+                }
             } else if (currentMode === 'calibrate' && calibration.tempStart) {
                 calibration.tempEnd = coords;
                 redrawFG();
@@ -3069,7 +3136,6 @@ EOF`;
             } else if (currentMode === 'delete') {
                 redrawFG();
             } else if (snapEnabled && dxfData && currentMode === 'path') {
-                // Force redraw on hover for OSNAP snapping indicator while drawing linear runs
                 redrawFG();
             }
         });
@@ -3078,6 +3144,10 @@ EOF`;
             if (currentMode === 'pan') {
                 isMouseDown = false;
                 canvasFg.style.cursor = 'grab';
+            } else if (isDraggingSymbol || isRotatingSymbol) {
+                isDraggingSymbol = false;
+                isRotatingSymbol = false;
+                renderTakeoffTable();
             } else if (currentMode === 'calibrate' && isMouseDown) {
                 const p1 = calibration.tempStart;
                 const p2 = calibration.tempEnd;
@@ -3416,10 +3486,14 @@ EOF`;
         }
 
         // --- EQUIPMENT SYMBOL RENDERING ENGINE ---
-        function drawEquipmentSymbol(ctx, x, y, symbol, color, size) {
+        function drawEquipmentSymbol(ctx, x, y, symbol, color, size, angle) {
             const s = size || 14;
+            const rAngle = angle || 0;
             ctx.save();
             ctx.translate(x, y);
+            if (rAngle !== 0) {
+                ctx.rotate(rAngle);
+            }
 
             // Handle standard SVG symbols directly
             if (svgCache[symbol] && svgCache[symbol].complete && svgCache[symbol].naturalWidth !== 0) {
@@ -3788,7 +3862,37 @@ EOF`;
                 if (item.type === 'point') {
                     const p = item.points[0];
                     const sym = material.symbol || 'circle';
-                    drawEquipmentSymbol(ctxFg, p.x, p.y, sym, material.color, 24);
+                    const angle = item.angle || 0;
+                    drawEquipmentSymbol(ctxFg, p.x, p.y, sym, material.color, 24, angle);
+                    
+                    if (currentMode === 'select' && item.id === selectedTakeoffId) {
+                        ctxFg.save();
+                        ctxFg.translate(p.x, p.y);
+                        ctxFg.rotate(angle);
+                        
+                        ctxFg.strokeStyle = '#10b981';
+                        ctxFg.lineWidth = 1.5;
+                        ctxFg.setLineDash([4, 3]);
+                        ctxFg.strokeRect(-16, -16, 32, 32);
+                        
+                        ctxFg.beginPath();
+                        ctxFg.moveTo(0, -16);
+                        ctxFg.lineTo(0, -35);
+                        ctxFg.strokeStyle = '#10b981';
+                        ctxFg.lineWidth = 1.5;
+                        ctxFg.setLineDash([]);
+                        ctxFg.stroke();
+                        
+                        ctxFg.beginPath();
+                        ctxFg.arc(0, -35, 4, 0, 2 * Math.PI);
+                        ctxFg.fillStyle = '#ffffff';
+                        ctxFg.fill();
+                        ctxFg.strokeStyle = '#10b981';
+                        ctxFg.lineWidth = 2;
+                        ctxFg.stroke();
+                        
+                        ctxFg.restore();
+                    }
                 } else if (item.type === 'path') {
                     ctxFg.beginPath();
                     ctxFg.moveTo(item.points[0].x, item.points[0].y);
@@ -3970,6 +4074,9 @@ EOF`;
                     if (currentMode === 'path' && activeDrawingPath.length > 0) {
                         activeDrawingPath = []; 
                         redrawFG();
+                    } else if (currentMode === 'select' && selectedTakeoffId) {
+                        selectedTakeoffId = null;
+                        redrawFG();
                     } else {
                         setMode('pan'); 
                     }
@@ -4002,6 +4109,13 @@ EOF`;
                     if (currentMode === 'path' && activeDrawingPath.length > 0) {
                         e.preventDefault();
                         activeDrawingPath.pop();
+                        redrawFG();
+                    } else if (currentMode === 'select' && selectedTakeoffId) {
+                        e.preventDefault();
+                        deleteTakeoffById(selectedTakeoffId);
+                        selectedTakeoffId = null;
+                        renderMaterialsList();
+                        renderTakeoffTable();
                         redrawFG();
                     }
                 }
