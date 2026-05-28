@@ -815,7 +815,11 @@
                 <button class="tool-btn" id="zoom-in" tooltip="Zoom In"><i class="fa-solid fa-plus"></i></button>
                 <button class="tool-btn" id="zoom-out" tooltip="Zoom Out"><i class="fa-solid fa-minus"></i></button>
                 <button class="tool-btn" id="zoom-fit" tooltip="Fit to Screen"><i class="fa-solid fa-expand"></i></button>
+                <div style="height: 1px; background: var(--border-subtle); margin: 4px 0;"></div>
+                <button class="tool-btn toggle-on" id="toggle-coverage" tooltip="Telecom Coverage Zones: ON/OFF"><i class="fa-solid fa-satellite-dish"></i></button>
             </div>
+
+
 
             <!-- Contextual Help Floating Banner -->
             <div class="help-banner" id="help-banner" style="display: none;">
@@ -1064,7 +1068,121 @@
                 </div>
             </div>
 
+            <!-- Collapsible Coverage Study Settings Section -->
+            <div id="mat-coverage-container" style="display: none; border: 1px dashed var(--border-subtle); border-radius: var(--radius-md); padding: 12px; margin-bottom: 15px; background: rgba(30, 41, 59, 0.5);">
+                <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; color: var(--text-primary);">
+                    <i class="fa-solid fa-satellite-dish" style="color: var(--color-primary);"></i>
+                    <span>Coverage Study Settings (Optional)</span>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label for="mat-coverage-type">Coverage Study Type</label>
+                    <select id="mat-coverage-type">
+                        <option value="none">-- No Coverage Study --</option>
+                        <option value="paga">PAGA Acoustic Study</option>
+                        <option value="cctv">CCTV Camera Field of View (FOV) Study</option>
+                    </select>
+                </div>
+
+                <!-- PAGA Fields -->
+                <div id="mat-coverage-paga-fields" style="display: none; border-top: 1px solid var(--border-subtle); padding-top: 10px; margin-top: 10px;">
+                    <div class="modal-grid-2">
+                        <div class="form-group">
+                            <label for="paga-sensitivity">Speaker Sensitivity (dB @ 1W/1m)</label>
+                            <input type="number" id="paga-sensitivity" value="90" min="0" step="any">
+                        </div>
+                        <div class="form-group">
+                            <label for="paga-power">Rated Power (Watts)</label>
+                            <input type="number" id="paga-power" value="6" min="0.1" step="any">
+                        </div>
+                    </div>
+                    <div class="modal-grid-2" style="margin-top: 10px;">
+                        <div class="form-group">
+                            <label for="paga-ambient-noise">Ambient Noise Level (dBA)</label>
+                            <input type="number" id="paga-ambient-noise" value="65" min="0" step="any">
+                        </div>
+                        <div class="form-group">
+                            <label for="paga-target-margin">Target Margin (dB above ambient)</label>
+                            <input type="number" id="paga-target-margin" value="15" min="0" step="any">
+                        </div>
+                    </div>
+                    <div class="modal-grid-2" style="margin-top: 10px;">
+                        <div class="form-group">
+                            <label for="paga-attenuation">Attenuation Model</label>
+                            <select id="paga-attenuation">
+                                <option value="freefield">Free-Field / Outdoor (-6dB per doubling)</option>
+                                <option value="indoor">Indoor (-3dB per doubling)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="paga-radius">Coverage Radius (m)</label>
+                            <input type="number" id="paga-radius" value="10" min="0.1" step="any" title="Calculated automatically, but can be manually overridden.">
+                        </div>
+                    </div>
+                    <div class="modal-grid-2" style="margin-top: 10px;">
+                        <div class="form-group">
+                            <label for="paga-color">Zone Color</label>
+                            <input type="color" id="paga-color" value="#eab308" style="height: 38px; padding: 2px; cursor: pointer;">
+                        </div>
+                        <div class="form-group">
+                            <label>Calculated SPL @ 1m</label>
+                            <div id="paga-spl-calc" style="font-size: 0.9rem; font-weight: bold; color: var(--color-primary); padding: 8px 0;">97.8 dB</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CCTV Fields -->
+                <div id="mat-coverage-cctv-fields" style="display: none; border-top: 1px solid var(--border-subtle); padding-top: 10px; margin-top: 10px;">
+                    <div class="modal-grid-2">
+                        <div class="form-group">
+                            <label for="cctv-lens">Lens / HFOV Preset</label>
+                            <select id="cctv-lens">
+                                <option value="2.8">2.8mm Lens (110° HFOV)</option>
+                                <option value="4">4.0mm Lens (85° HFOV)</option>
+                                <option value="6">6.0mm Lens (55° HFOV)</option>
+                                <option value="12">12.0mm Lens (28° HFOV)</option>
+                                <option value="custom">Custom HFOV</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="cctv-hfov">Horizontal FOV (degrees)</label>
+                            <input type="number" id="cctv-hfov" value="110" min="1" max="360" step="any">
+                        </div>
+                    </div>
+                    <div class="modal-grid-2" style="margin-top: 10px;">
+                        <div class="form-group">
+                            <label for="cctv-detection">Detection Range (m) [25 PPM]</label>
+                            <input type="number" id="cctv-detection" value="40" min="0.1" step="any">
+                        </div>
+                        <div class="form-group">
+                            <label for="cctv-observation">Observation Range (m) [63 PPM]</label>
+                            <input type="number" id="cctv-observation" value="15" min="0.1" step="any">
+                        </div>
+                    </div>
+                    <div class="modal-grid-2" style="margin-top: 10px;">
+                        <div class="form-group">
+                            <label for="cctv-recognition">Recognition Range (m) [125 PPM]</label>
+                            <input type="number" id="cctv-recognition" value="8" min="0.1" step="any">
+                        </div>
+                        <div class="form-group">
+                            <label for="cctv-identification">Identification Range (m) [250 PPM]</label>
+                            <input type="number" id="cctv-identification" value="4" min="0.1" step="any">
+                        </div>
+                    </div>
+                    <div class="modal-grid-2" style="margin-top: 10px;">
+                        <div class="form-group">
+                            <label for="cctv-color">Zone Color</label>
+                            <input type="color" id="cctv-color" value="#14b8a6" style="height: 38px; padding: 2px; cursor: pointer;">
+                        </div>
+                        <div class="form-group">
+                            <!-- spacer -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="modal-actions">
+
                 <button class="btn" id="mat-cancel">Cancel</button>
                 <button class="btn btn-primary" id="mat-submit">Add Material</button>
             </div>
@@ -1133,6 +1251,7 @@
         let isRotatingSymbol = false; // Rotating state for select mode
         let dragStartOffset = { x: 0, y: 0 }; // Offset from center when dragging starts
         let rotationCenter = { x: 0, y: 0 }; // Rotation pivot point
+        let coverageVisible = true; // Toggle for telecom coverage overlays
 
         // UI references
         const fileInput = document.getElementById('file-input');
@@ -1145,6 +1264,8 @@
         const ctxFg = canvasFg.getContext('2d');
         const toolbar = document.getElementById('toolbar');
         const viewControls = document.getElementById('view-controls');
+
+
         const helpBanner = document.getElementById('help-banner');
         const helpBannerText = document.getElementById('help-banner-text');
         const pageNavigation = document.getElementById('page-navigation');
@@ -1194,6 +1315,25 @@
                 document.getElementById('mat-aerial').checked = false;
                 document.getElementById('mat-weight').value = '0.2';
                 document.getElementById('mat-tension').value = '500';
+                
+                // Reset coverage fields
+                document.getElementById('mat-coverage-type').value = 'none';
+                document.getElementById('paga-sensitivity').value = '90';
+                document.getElementById('paga-power').value = '6';
+                document.getElementById('paga-ambient-noise').value = '65';
+                document.getElementById('paga-target-margin').value = '15';
+                document.getElementById('paga-attenuation').value = 'freefield';
+                document.getElementById('paga-radius').value = '10';
+                document.getElementById('paga-color').value = '#eab308';
+                document.getElementById('paga-spl-calc').innerText = '97.8 dB';
+                document.getElementById('cctv-lens').value = '2.8';
+                document.getElementById('cctv-hfov').value = '110';
+                document.getElementById('cctv-detection').value = '40';
+                document.getElementById('cctv-observation').value = '15';
+                document.getElementById('cctv-recognition').value = '8';
+                document.getElementById('cctv-identification').value = '4';
+                document.getElementById('cctv-color').value = '#14b8a6';
+
                 updateModalFieldVisibilities();
                 updateSymbolPreview();
                 showModal(matModal);
@@ -1218,9 +1358,40 @@
             });
             document.getElementById('mat-color').addEventListener('input', updateSymbolPreview);
 
-            // Hook Calibration switches
+            // Hook coverage settings listeners
+            document.getElementById('mat-coverage-type').addEventListener('change', updateModalFieldVisibilities);
+            document.getElementById('paga-sensitivity').addEventListener('input', updatePagaCalculations);
+            document.getElementById('paga-power').addEventListener('input', updatePagaCalculations);
+            document.getElementById('paga-ambient-noise').addEventListener('input', updatePagaCalculations);
+            document.getElementById('paga-target-margin').addEventListener('input', updatePagaCalculations);
+            document.getElementById('paga-attenuation').addEventListener('change', updatePagaCalculations);
+            document.getElementById('cctv-lens').addEventListener('change', () => {
+                handleCctvLensChange();
+                document.getElementById('cctv-hfov').dispatchEvent(new Event('input'));
+            });
+            document.getElementById('cctv-hfov').addEventListener('input', (e) => {
+                const hfov = parseFloat(e.target.value);
+                const lensPreset = document.getElementById('cctv-lens');
+                if (hfov === 110) lensPreset.value = '2.8';
+                else if (hfov === 85) lensPreset.value = '4';
+                else if (hfov === 55) lensPreset.value = '6';
+                else if (hfov === 28) lensPreset.value = '12';
+                else lensPreset.value = 'custom';
+            });
+
+
             calMethodSelect.addEventListener('change', toggleCalMethod);
             document.getElementById('btn-apply-ratio-cal').addEventListener('click', applyRatioCalibration);
+
+            // Hook Coverage Toggle button
+            const btnToggleCoverage = document.getElementById('toggle-coverage');
+            btnToggleCoverage.addEventListener('click', () => {
+                coverageVisible = !coverageVisible;
+                btnToggleCoverage.classList.toggle('toggle-on', coverageVisible);
+                btnToggleCoverage.classList.toggle('toggle-off', !coverageVisible);
+                redrawFG();
+            });
+
 
             // Hook manual Calibration triggers
             document.getElementById('btn-calibrate').addEventListener('click', startCalibration);
@@ -1264,6 +1435,8 @@
             toolbar.style.display = 'flex';
             viewControls.style.display = 'flex';
             helpBanner.style.display = 'flex';
+
+
             bottomPanel.style.display = 'block';
 
             // Clean CAD states
@@ -2081,6 +2254,8 @@ EOF`;
             toolbar.style.display = 'flex';
             viewControls.style.display = 'flex';
             helpBanner.style.display = 'flex';
+
+
             bottomPanel.style.display = 'block';
 
             // Clean PDF and Image states
@@ -2236,8 +2411,56 @@ EOF`;
             'closure': { name: 'Splice Closure / Cabinet', type: 'point', color: '#a855f7', layer: 'U-TC-EQUP-CLOS', waste: 0, slack: 5.0, isAerial: false, w: 0.0, T: 1, symbol: 'closure', unit: 'pcs' },
             'wap': { name: 'Wireless Access Point (AP)', type: 'point', color: '#f59e0b', layer: 'E-TC-EQUP-WAP', waste: 0, slack: 3.0, isAerial: false, w: 0.0, T: 1, symbol: 'wap', unit: 'pcs' },
             'outlet': { name: 'Workstation Data Outlet', type: 'point', color: '#10b981', layer: 'E-TC-WALL-OUTL', waste: 0, slack: 3.0, isAerial: false, w: 0.0, T: 1, symbol: 'outlet', unit: 'pcs' },
-            'paga_speaker_a': { name: 'PAGA LOUDSPEAKER - WALL/STRUCTURE MOUNTED "A" (6W)', type: 'point', color: '#eab308', layer: 'E-PA-EQUP-SPKR', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'paga_speaker_a', unit: 'pcs' },
-            'paga_speaker_b': { name: 'PAGA LOUDSPEAKER - WALL/STRUCTURE MOUNTED "B" (6W)', type: 'point', color: '#eab308', layer: 'E-PA-EQUP-SPKR', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'paga_speaker_b', unit: 'pcs' },
+            'paga_speaker_a': { 
+                name: 'PAGA LOUDSPEAKER - WALL/STRUCTURE MOUNTED "A" (6W)', 
+                type: 'point', 
+                color: '#eab308', 
+                layer: 'E-PA-EQUP-SPKR', 
+                waste: 0, 
+                slack: 0.0, 
+                isAerial: false, 
+                w: 0.0, 
+                T: 1, 
+                symbol: 'paga_speaker_a', 
+                unit: 'pcs',
+                coverage: {
+                    type: 'paga',
+                    enabled: true,
+                    spl: 97.8,
+                    sensitivity: 90,
+                    power: 6,
+                    ambientNoise: 65,
+                    targetMargin: 15,
+                    radiusM: 10,
+                    indoorAttenuation: false,
+                    color: '#eab30844'
+                }
+            },
+            'paga_speaker_b': { 
+                name: 'PAGA LOUDSPEAKER - WALL/STRUCTURE MOUNTED "B" (6W)', 
+                type: 'point', 
+                color: '#eab308', 
+                layer: 'E-PA-EQUP-SPKR', 
+                waste: 0, 
+                slack: 0.0, 
+                isAerial: false, 
+                w: 0.0, 
+                T: 1, 
+                symbol: 'paga_speaker_b', 
+                unit: 'pcs',
+                coverage: {
+                    type: 'paga',
+                    enabled: true,
+                    spl: 97.8,
+                    sensitivity: 90,
+                    power: 6,
+                    ambientNoise: 65,
+                    targetMargin: 15,
+                    radiusM: 10,
+                    indoorAttenuation: false,
+                    color: '#eab30844'
+                }
+            },
             'card_reader_indoor': { name: 'CARD READER (INDOOR)', type: 'point', color: '#3b82f6', layer: 'E-SE-EQUP-CARD', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'card_reader_indoor', unit: 'pcs' },
             'card_reader_outdoor': { name: 'CARD READER (WEATHER PROOF OUTDOOR)', type: 'point', color: '#3b82f6', layer: 'E-SE-EQUP-CARD', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'card_reader_outdoor', unit: 'pcs' },
             'door_contact': { name: 'DOOR STATUS CONTACT', type: 'point', color: '#2563eb', layer: 'E-SE-EQUP-DOOR', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'door_contact', unit: 'pcs' },
@@ -2245,13 +2468,131 @@ EOF`;
             'break_glass': { name: 'BREAK GLASS UNIT', type: 'point', color: '#ef4444', layer: 'E-SE-EQUP-BGU', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'break_glass', unit: 'pcs' },
             'telecom_cabinet': { name: 'TELECOM CABINET', type: 'point', color: '#8b5cf6', layer: 'U-TC-EQUP-CABN', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'telecom_cabinet', unit: 'pcs' },
             'indoor_telephone': { name: 'INDOOR IP TELEPHONE', type: 'point', color: '#06b6d4', layer: 'E-TC-EQUP-PHON', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'indoor_telephone', unit: 'pcs' },
-            'camera_outdoor': { name: 'SECURITY WEATHER PROOF OUTDOOR DOME CAMERA', type: 'point', color: '#14b8a6', layer: 'E-SE-EQUP-CCTV', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'camera_outdoor', unit: 'pcs' },
+            'camera_outdoor': { 
+                name: 'SECURITY WEATHER PROOF OUTDOOR DOME CAMERA', 
+                type: 'point', 
+                color: '#14b8a6', 
+                layer: 'E-SE-EQUP-CCTV', 
+                waste: 0, 
+                slack: 0.0, 
+                isAerial: false, 
+                w: 0.0, 
+                T: 1, 
+                symbol: 'camera_outdoor', 
+                unit: 'pcs',
+                coverage: {
+                    type: 'cctv',
+                    enabled: true,
+                    hfov: 110,
+                    detectionM: 40,
+                    observationM: 15,
+                    recognitionM: 8,
+                    identificationM: 4,
+                    color: '#14b8a644'
+                }
+            },
             'wifi_ap': { name: 'WIFI ACCESS POINT', type: 'point', color: '#f59e0b', layer: 'E-TC-EQUP-WAP', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'wifi_ap', unit: 'pcs' },
-            'camera_indoor': { name: 'SECURITY INDOOR DOME CAMERA', type: 'point', color: '#14b8a6', layer: 'E-SE-EQUP-CCTV', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'camera_indoor', unit: 'pcs' },
+            'camera_indoor': { 
+                name: 'SECURITY INDOOR DOME CAMERA', 
+                type: 'point', 
+                color: '#14b8a6', 
+                layer: 'E-SE-EQUP-CCTV', 
+                waste: 0, 
+                slack: 0.0, 
+                isAerial: false, 
+                w: 0.0, 
+                T: 1, 
+                symbol: 'camera_indoor', 
+                unit: 'pcs',
+                coverage: {
+                    type: 'cctv',
+                    enabled: true,
+                    hfov: 110,
+                    detectionM: 25,
+                    observationM: 10,
+                    recognitionM: 5,
+                    identificationM: 3,
+                    color: '#14b8a644'
+                }
+            },
             'card_reader_keyboard': { name: 'CARD READER WITH KEYBOARD (INDOOR)', type: 'point', color: '#3b82f6', layer: 'E-SE-EQUP-CARD', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'card_reader_keyboard', unit: 'pcs' },
-            'ceiling_speaker_a': { name: 'INDOOR CEILING SPEAKER "A" (1W)', type: 'point', color: '#f59e0b', layer: 'E-PA-EQUP-SPKR', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'ceiling_speaker_a', unit: 'pcs' },
-            'ceiling_speaker_b': { name: 'INDOOR CEILING SPEAKER "B" (1W)', type: 'point', color: '#f59e0b', layer: 'E-PA-EQUP-SPKR', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'ceiling_speaker_b', unit: 'pcs' }
+            'ceiling_speaker_a': { 
+                name: 'INDOOR CEILING SPEAKER "A" (1W)', 
+                type: 'point', 
+                color: '#f59e0b', 
+                layer: 'E-PA-EQUP-SPKR', 
+                waste: 0, 
+                slack: 0.0, 
+                isAerial: false, 
+                w: 0.0, 
+                T: 1, 
+                symbol: 'ceiling_speaker_a', 
+                unit: 'pcs',
+                coverage: {
+                    type: 'paga',
+                    enabled: true,
+                    spl: 90,
+                    sensitivity: 90,
+                    power: 1,
+                    ambientNoise: 50,
+                    targetMargin: 15,
+                    radiusM: 4.5,
+                    indoorAttenuation: true,
+                    color: '#f59e0b44'
+                }
+            },
+            'ceiling_speaker_b': { 
+                name: 'INDOOR CEILING SPEAKER "B" (1W)', 
+                type: 'point', 
+                color: '#f59e0b', 
+                layer: 'E-PA-EQUP-SPKR', 
+                waste: 0, 
+                slack: 0.0, 
+                isAerial: false, 
+                w: 0.0, 
+                T: 1, 
+                symbol: 'ceiling_speaker_b', 
+                unit: 'pcs',
+                coverage: {
+                    type: 'paga',
+                    enabled: true,
+                    spl: 90,
+                    sensitivity: 90,
+                    power: 1,
+                    ambientNoise: 50,
+                    targetMargin: 15,
+                    radiusM: 4.5,
+                    indoorAttenuation: true,
+                    color: '#f59e0b44'
+                }
+            }
         };
+
+
+        function updatePagaCalculations() {
+            const sens = parseFloat(document.getElementById('paga-sensitivity').value) || 90;
+            const power = parseFloat(document.getElementById('paga-power').value) || 6;
+            const ambient = parseFloat(document.getElementById('paga-ambient-noise').value) || 65;
+            const margin = parseFloat(document.getElementById('paga-target-margin').value) || 15;
+            const attenModel = document.getElementById('paga-attenuation').value;
+            
+            const spl = sens + 10 * Math.log10(power);
+            const targetSPL = ambient + margin;
+            const isIndoor = attenModel === 'indoor';
+            const attenFactor = isIndoor ? 10 : 20;
+            const radius = Math.pow(10, (spl - targetSPL) / attenFactor);
+            
+            document.getElementById('paga-spl-calc').innerText = spl.toFixed(1) + ' dB';
+            document.getElementById('paga-radius').value = radius.toFixed(1);
+        }
+
+        function handleCctvLensChange() {
+            const val = document.getElementById('cctv-lens').value;
+            if (val !== 'custom') {
+                const hfovs = { '2.8': 110, '4': 85, '6': 55, '12': 28 };
+                document.getElementById('cctv-hfov').value = hfovs[val];
+            }
+        }
 
         function handlePresetChange(e) {
             const val = e.target.value;
@@ -2276,6 +2617,41 @@ EOF`;
                 } else {
                     unitSelect.value = preset.unit || 'pcs';
                 }
+
+                // Populate coverage block if preset has coverage
+                const covTypeSelect = document.getElementById('mat-coverage-type');
+                if (preset.coverage) {
+                    covTypeSelect.value = preset.coverage.type;
+                    if (preset.coverage.type === 'paga') {
+                        document.getElementById('paga-sensitivity').value = preset.coverage.sensitivity;
+                        document.getElementById('paga-power').value = preset.coverage.power;
+                        document.getElementById('paga-ambient-noise').value = preset.coverage.ambientNoise;
+                        document.getElementById('paga-target-margin').value = preset.coverage.targetMargin;
+                        document.getElementById('paga-attenuation').value = preset.coverage.indoorAttenuation ? 'indoor' : 'freefield';
+                        document.getElementById('paga-radius').value = preset.coverage.radiusM;
+                        document.getElementById('paga-color').value = preset.coverage.color.substring(0, 7);
+                        updatePagaCalculations();
+                    } else if (preset.coverage.type === 'cctv') {
+                        const hfov = preset.coverage.hfov;
+                        const lensPreset = document.getElementById('cctv-lens');
+                        if (hfov === 110) lensPreset.value = '2.8';
+                        else if (hfov === 85) lensPreset.value = '4';
+                        else if (hfov === 55) lensPreset.value = '6';
+                        else if (hfov === 28) lensPreset.value = '12';
+                        else lensPreset.value = 'custom';
+                        
+                        document.getElementById('cctv-hfov').value = hfov;
+                        document.getElementById('cctv-detection').value = preset.coverage.detectionM;
+                        document.getElementById('cctv-observation').value = preset.coverage.observationM;
+                        document.getElementById('cctv-recognition').value = preset.coverage.recognitionM;
+                        document.getElementById('cctv-identification').value = preset.coverage.identificationM;
+                        document.getElementById('cctv-color').value = preset.coverage.color.substring(0, 7);
+                    }
+                } else {
+                    covTypeSelect.value = 'none';
+                }
+            } else {
+                document.getElementById('mat-coverage-type').value = 'none';
             }
             updateModalFieldVisibilities();
             updateSymbolPreview();
@@ -2291,6 +2667,11 @@ EOF`;
             const unitSelect = document.getElementById('mat-unit-select');
             const slackLabel = document.querySelector('label[for="mat-slack"]');
             
+            const covContainer = document.getElementById('mat-coverage-container');
+            const covType = document.getElementById('mat-coverage-type').value;
+            const pagaFields = document.getElementById('mat-coverage-paga-fields');
+            const cctvFields = document.getElementById('mat-coverage-cctv-fields');
+            
             // Symbol row only shown for point/counter materials
             symbolRow.style.display = (style === 'point') ? 'grid' : 'none';
 
@@ -2303,6 +2684,19 @@ EOF`;
                 } else {
                     slackLabel.innerText = "Vertical Height / Run (m/ft)";
                 }
+                
+                // Show coverage container
+                covContainer.style.display = 'block';
+                if (covType === 'paga') {
+                    pagaFields.style.display = 'block';
+                    cctvFields.style.display = 'none';
+                } else if (covType === 'cctv') {
+                    pagaFields.style.display = 'none';
+                    cctvFields.style.display = 'block';
+                } else {
+                    pagaFields.style.display = 'none';
+                    cctvFields.style.display = 'none';
+                }
             } else {
                 aerialToggleContainer.style.display = 'flex';
                 if (isAerial) {
@@ -2313,8 +2707,12 @@ EOF`;
                 unitSelect.disabled = true;
                 unitSelect.value = calibration.unit || 'm';
                 slackLabel.innerText = "Service Loop Slack (m/ft)";
+                
+                // Hide coverage container
+                covContainer.style.display = 'none';
             }
         }
+
 
         function calculateTakeoffItemValues(item, material) {
             if (item.type === 'point') {
@@ -2468,10 +2866,41 @@ EOF`;
                 return;
             }
 
+            // Gather coverage parameters
+            let coverage = null;
+            if (type === 'point') {
+                const covType = document.getElementById('mat-coverage-type').value;
+                if (covType === 'paga') {
+                    coverage = {
+                        type: 'paga',
+                        enabled: true,
+                        spl: parseFloat(document.getElementById('paga-spl-calc').innerText) || 97.8,
+                        sensitivity: parseFloat(document.getElementById('paga-sensitivity').value) || 90,
+                        power: parseFloat(document.getElementById('paga-power').value) || 6,
+                        ambientNoise: parseFloat(document.getElementById('paga-ambient-noise').value) || 65,
+                        targetMargin: parseFloat(document.getElementById('paga-target-margin').value) || 15,
+                        radiusM: parseFloat(document.getElementById('paga-radius').value) || 10,
+                        indoorAttenuation: document.getElementById('paga-attenuation').value === 'indoor',
+                        color: document.getElementById('paga-color').value + '44'
+                    };
+                } else if (covType === 'cctv') {
+                    coverage = {
+                        type: 'cctv',
+                        enabled: true,
+                        hfov: parseFloat(document.getElementById('cctv-hfov').value) || 110,
+                        detectionM: parseFloat(document.getElementById('cctv-detection').value) || 40,
+                        observationM: parseFloat(document.getElementById('cctv-observation').value) || 15,
+                        recognitionM: parseFloat(document.getElementById('cctv-recognition').value) || 8,
+                        identificationM: parseFloat(document.getElementById('cctv-identification').value) || 4,
+                        color: document.getElementById('cctv-color').value + '44'
+                    };
+                }
+            }
+
             const id = 'mat-' + Date.now();
             const unitSelect = document.getElementById('mat-unit-select').value;
             const unit = type === 'path' ? (calibration.unit || 'm') : unitSelect;
-            materials.push({ id, name, type, color, unit, layer, waste, slack, isAerial, w, T, symbol });
+            materials.push({ id, name, type, color, unit, layer, waste, slack, isAerial, w, T, symbol, coverage });
             activeMaterialId = id;
 
             hideModal(matModal);
@@ -2481,6 +2910,7 @@ EOF`;
             renderTakeoffTable();
             setMode(type);
         }
+
 
 		function deleteMaterial(id) {
 			if (confirm('Are you sure you want to delete this material and all associated measurements from the drawing?')) {
@@ -3848,6 +4278,87 @@ EOF`;
                 ctxFg.fillText(activeSnappedPoint.type.toUpperCase(), activeSnappedPoint.x + 10, activeSnappedPoint.y + 3);
             }
 
+            // 0b. Draw Telecom Coverage Zones (if visible and calibrated)
+            if (coverageVisible && calibration.pixelsPerUnit) {
+                takeoffs.forEach(item => {
+                    if (pdfDoc && item.page !== pageNum) return;
+
+                    const material = materials.find(m => m.id === item.materialId);
+                    if (!material || !material.coverage || !material.coverage.enabled) return;
+
+                    if (item.type === 'point') {
+                        const p = item.points[0];
+                        const cov = material.coverage;
+                        const angle = item.angle || 0; // in radians
+
+                        if (cov.type === 'paga') {
+                            const radiusPx = cov.radiusM * calibration.pixelsPerUnit;
+                            
+                            // Draw outer coverage circle
+                            ctxFg.save();
+                            ctxFg.beginPath();
+                            ctxFg.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
+                            ctxFg.fillStyle = cov.color || 'rgba(234, 179, 8, 0.15)';
+                            ctxFg.fill();
+                            
+                            // Outer dashed boundary
+                            ctxFg.strokeStyle = material.color;
+                            ctxFg.lineWidth = 1;
+                            ctxFg.setLineDash([4, 4]);
+                            ctxFg.stroke();
+
+                            // Draw inner strong coverage zone at 50% radius
+                            ctxFg.beginPath();
+                            ctxFg.arc(p.x, p.y, radiusPx * 0.5, 0, Math.PI * 2);
+                            ctxFg.fillStyle = cov.color ? cov.color.substring(0, 7) + '1f' : 'rgba(234, 179, 8, 0.08)';
+                            ctxFg.fill();
+                            ctxFg.strokeStyle = material.color;
+                            ctxFg.lineWidth = 0.75;
+                            ctxFg.setLineDash([2, 2]);
+                            ctxFg.stroke();
+                            
+                            ctxFg.restore();
+                        } else if (cov.type === 'cctv') {
+                            const hfovRad = (cov.hfov || 110) * Math.PI / 180;
+                            const startAngle = angle - hfovRad / 2;
+                            const endAngle = angle + hfovRad / 2;
+
+                            // Draw nested wedges from largest to smallest (D -> O -> R -> I)
+                            const ranges = [
+                                { dist: cov.detectionM, color: 'rgba(239, 68, 68, 0.08)' }, // Red
+                                { dist: cov.observationM, color: 'rgba(249, 115, 22, 0.10)' }, // Orange
+                                { dist: cov.recognitionM, color: 'rgba(234, 179, 8, 0.12)' }, // Yellow
+                                { dist: cov.identificationM, color: 'rgba(16, 185, 129, 0.15)' } // Green
+                            ];
+
+                            ctxFg.save();
+                            ranges.forEach((range, idx) => {
+                                if (!range.dist) return;
+                                const distPx = range.dist * calibration.pixelsPerUnit;
+                                
+                                ctxFg.beginPath();
+                                ctxFg.moveTo(p.x, p.y);
+                                ctxFg.arc(p.x, p.y, distPx, startAngle, endAngle);
+                                ctxFg.closePath();
+                                ctxFg.fillStyle = range.color;
+                                ctxFg.fill();
+
+                                // Boundary stroke for the detection range
+                                if (idx === 0) {
+                                    ctxFg.strokeStyle = material.color;
+                                    ctxFg.lineWidth = 1;
+                                    ctxFg.setLineDash([4, 4]);
+                                    ctxFg.beginPath();
+                                    ctxFg.arc(p.x, p.y, distPx, startAngle, endAngle);
+                                    ctxFg.stroke();
+                                }
+                            });
+                            ctxFg.restore();
+                        }
+                    }
+                });
+            }
+
             // 1. Draw completed takeoffs
             takeoffs.forEach(item => {
                 if (pdfDoc && item.page !== pageNum) return;
@@ -4278,6 +4789,42 @@ EOF`;
 
                 csvContent += `"${m.name}","${m.layer || ''}","${m.type === 'path' ? 'Linear' : 'Count'}",${rawVal},"${modifiers}",${totalVal},"${activeUnit}",${summary.count}\r\n`;
             });
+
+            // Append Coverage Study Summary Section to CSV
+            csvContent += '\n\n--- Coverage Study Summary ---\n';
+            csvContent += 'Material Name,Coverage Type,Coverage Radius/Range,HFOV,Placed Count,Estimated Coverage Area\n';
+            
+            let hasCoverage = false;
+            materials.forEach(m => {
+                if (!m.coverage) return;
+                const summary = getMaterialSummary(m.id);
+                if (summary.count === 0) return;
+                
+                hasCoverage = true;
+                let rangeStr = '';
+                let hfovStr = '360°';
+                let estAreaVal = 0;
+                let areaUnit = 'sq. m';
+                
+                if (calibration.unit === 'ft') {
+                    areaUnit = 'sq. ft';
+                }
+
+                if (m.coverage.type === 'paga') {
+                    rangeStr = `${m.coverage.radiusM.toFixed(1)}m radius`;
+                    estAreaVal = Math.PI * Math.pow(m.coverage.radiusM, 2) * summary.count;
+                } else if (m.coverage.type === 'cctv') {
+                    rangeStr = `${m.coverage.detectionM.toFixed(1)}m range (Detection)`;
+                    hfovStr = `${m.coverage.hfov}°`;
+                    estAreaVal = (m.coverage.hfov / 360) * Math.PI * Math.pow(m.coverage.detectionM, 2) * summary.count;
+                }
+                
+                csvContent += `"${m.name}","${m.coverage.type.toUpperCase()}","${rangeStr}","${hfovStr}",${summary.count},"${estAreaVal.toFixed(1)} ${areaUnit}"\n`;
+            });
+            
+            if (!hasCoverage) {
+                csvContent += 'No coverage study items placed on drawing.,,,,\n';
+            }
 
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement('a');
