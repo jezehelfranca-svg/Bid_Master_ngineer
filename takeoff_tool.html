@@ -5480,18 +5480,44 @@ EOF`;
                 if (e.ctrlKey) {
                     e.preventDefault();
                     const factor = e.deltaY < 0 ? 0.1 : -0.1;
-                    changeZoom(factor);
+                    const rect = workspace.getBoundingClientRect();
+                    const focalX = e.clientX - rect.left;
+                    const focalY = e.clientY - rect.top;
+                    changeZoom(factor, focalX, focalY);
                 }
             }, { passive: false });
         }
 
-        function changeZoom(factor) {
-            setZoom(currentZoom + factor);
+        function changeZoom(factor, focalX = null, focalY = null) {
+            setZoom(currentZoom + factor, focalX, focalY);
         }
 
-        function setZoom(val) {
+        function setZoom(val, focalX = null, focalY = null) {
+            const oldZoom = currentZoom;
             currentZoom = Math.max(0.2, Math.min(val, 4.0));
+            
+            if (oldZoom === currentZoom) return;
+
+            // Determine focal point (defaults to center of viewport)
+            const rect = workspace.getBoundingClientRect();
+            const fx = focalX !== null ? focalX : rect.width / 2;
+            const fy = focalY !== null ? focalY : rect.height / 2;
+
+            // Find unscaled coordinate under focal point
+            const unscaledX = (workspace.scrollLeft + fx) / oldZoom;
+            const unscaledY = (workspace.scrollTop + fy) / oldZoom;
+
+            // Apply scaling
             canvasOuter.style.transform = `scale(${currentZoom})`;
+
+            // Adjust scroll position so the focal point stays in the exact same screen pixel
+            const newScrollLeft = (unscaledX * currentZoom) - fx;
+            const newScrollTop = (unscaledY * currentZoom) - fy;
+
+            requestAnimationFrame(() => {
+                workspace.scrollLeft = newScrollLeft;
+                workspace.scrollTop = newScrollTop;
+            });
         }
 
         // --- KEYBOARD LISTENERS ---
