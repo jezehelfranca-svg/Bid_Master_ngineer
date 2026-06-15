@@ -731,6 +731,10 @@
             <button class="tool-btn" id="tool-point" tooltip="Count Placer"><i class="fa-solid fa-location-dot"></i></button>
             <button class="tool-btn" id="tool-path" tooltip="Linear Measurement"><i class="fa-solid fa-route"></i></button>
             <button class="tool-btn" id="tool-delete" tooltip="Delete Placed Symbol/Run"><i class="fa-solid fa-eraser"></i></button>
+            <div style="width: 1px; height: 20px; background: var(--border); margin: 0 4px; display: inline-block; vertical-align: middle;"></div>
+            <button class="tool-btn" id="tool-text" tooltip="Text Callout"><i class="fa-solid fa-font"></i></button>
+            <button class="tool-btn" id="tool-cloud" tooltip="Revision Cloud"><i class="fa-solid fa-cloud"></i></button>
+            <button class="tool-btn" id="tool-dimension" tooltip="Dimension Line"><i class="fa-solid fa-ruler"></i></button>
         </div>
         
         <div class="toolbar-divider"></div>
@@ -744,6 +748,17 @@
         
         <div class="toolbar-divider"></div>
         
+        <!-- Zone Selection -->
+        <div class="toolbar-section">
+            <span class="toolbar-section-label">Active Zone</span>
+            <select id="active-zone-select" class="form-control" style="width: 140px; height: 26px; padding: 2px 6px; font-size: 0.8rem; background: var(--surface); color: var(--text-primary); border: 1px solid var(--border);">
+                <option value="Default">Default</option>
+            </select>
+            <button class="tool-btn" id="btn-manage-zones" tooltip="Manage Zones"><i class="fa-solid fa-layer-group"></i></button>
+        </div>
+
+        <div class="toolbar-divider"></div>
+        
         <!-- View Controls -->
         <div class="toolbar-section">
             <span class="toolbar-section-label">View</span>
@@ -751,6 +766,18 @@
             <button class="tool-btn" id="zoom-out" tooltip="Zoom Out"><i class="fa-solid fa-minus"></i></button>
             <button class="tool-btn" id="zoom-fit" tooltip="Fit to Screen"><i class="fa-solid fa-expand"></i></button>
             <button class="tool-btn toggle-on" id="toggle-coverage" tooltip="Telecom Coverage Zones: ON"><i class="fa-solid fa-satellite-dish"></i></button>
+        </div>
+        
+        <div class="toolbar-divider"></div>
+        
+        <!-- Symbol Controls -->
+        <div class="toolbar-section">
+            <span class="toolbar-section-label">Symbol Scale</span>
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-compress" style="font-size: 0.75rem; color: var(--text-muted);"></i>
+                <input type="range" id="symbol-scale-slider" min="0.2" max="5.0" step="0.1" value="1.0" style="width: 80px;">
+                <i class="fa-solid fa-expand" style="font-size: 0.85rem; color: var(--text-muted);"></i>
+            </div>
         </div>
         
         <div class="toolbar-divider"></div>
@@ -1030,6 +1057,33 @@
         </div>
     </div>
 
+    <!-- Zone Manager Modal -->
+    <div class="modal-overlay" id="zone-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <i class="fa-solid fa-layer-group" style="color: var(--color-primary);"></i>
+                <h3>Manage Zones & Locations</h3>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-secondary);">
+                    Group your takeoffs by physical location (e.g., Level 1, Server Room).
+                </div>
+                <div class="form-group" style="display: flex; gap: 8px;">
+                    <input type="text" id="new-zone-input" placeholder="New zone name..." style="flex: 1;" class="form-control">
+                    <button class="btn btn-primary" id="btn-add-zone">Add</button>
+                </div>
+                <div class="form-group">
+                    <ul id="zone-list" style="list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 4px;">
+                        <!-- dynamic zones -->
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" onclick="hideModal(document.getElementById('zone-modal'))">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- New Material Add Modal -->
     <div class="modal-overlay" id="material-modal">
         <div class="modal modal-wide">
@@ -1260,8 +1314,36 @@
                             <input type="color" id="paga-color" value="#eab308" style="height: 38px; padding: 2px; cursor: pointer;">
                         </div>
                         <div class="form-group">
-                            <label>Calculated SPL @ 1m</label>
-                            <div id="paga-spl-calc" style="font-size: 0.9rem; font-weight: bold; color: var(--color-primary); padding: 8px 0;">97.8 dB</div>
+                            <label for="paga-dispersion">Dispersion Angle</label>
+                            <select id="paga-dispersion">
+                                <option value="360">360° (Ceiling / Omnidirectional)</option>
+                                <option value="180">180° (Wall Mount)</option>
+                                <option value="120">120° (Wide Horn)</option>
+                                <option value="90">90° (Standard Horn)</option>
+                                <option value="60">60° (Narrow Horn)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: var(--radius-sm); border-left: 3px solid var(--color-primary);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
+                            <span style="font-weight: bold; font-size: 0.9rem; color: var(--text-primary);">Acoustic Calculations</span>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary);">SPL @ 1m: <span id="paga-spl-calc" style="color: var(--color-primary); font-weight: bold;">97.8 dB</span></span>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; font-size: 0.8rem;">
+                            <div style="background: rgba(255,255,255,0.05); padding: 6px; border-radius: 4px; text-align: center;">
+                                <div style="color: var(--text-secondary); margin-bottom: 4px; font-size: 0.75rem;">Edge-to-Edge (0%)</div>
+                                <div id="paga-spacing-0" style="font-weight: bold; color: var(--text-primary);">20.0 m</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.05); padding: 6px; border-radius: 4px; text-align: center;">
+                                <div style="color: var(--text-secondary); margin-bottom: 4px; font-size: 0.75rem;">Square Grid (Min)</div>
+                                <div id="paga-spacing-min" style="font-weight: bold; color: var(--text-primary);">14.1 m</div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.05); padding: 6px; border-radius: 4px; text-align: center;">
+                                <div style="color: var(--text-secondary); margin-bottom: 4px; font-size: 0.75rem;">Edge-to-Center (100%)</div>
+                                <div id="paga-spacing-100" style="font-weight: bold; color: var(--text-primary);">10.0 m</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1270,7 +1352,25 @@
                 <div id="mat-coverage-cctv-fields" style="display: none; border-top: 1px solid var(--border-subtle); padding-top: 10px; margin-top: 10px;">
                     <div class="modal-grid-2">
                         <div class="form-group">
-                            <label for="cctv-lens">Lens / HFOV Preset</label>
+                            <label for="cctv-resolution">Camera Resolution</label>
+                            <select id="cctv-resolution">
+                                <option value="1920">1080p (1920 px)</option>
+                                <option value="2560">4MP (2560 px)</option>
+                                <option value="3840" selected>4K UHD (3840 px)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="cctv-sensor">Sensor Format</label>
+                            <select id="cctv-sensor">
+                                <option value="4.8">1/3" (4.8 mm width)</option>
+                                <option value="5.27" selected>1/2.8" (5.27 mm width)</option>
+                                <option value="6.4">1/2" (6.4 mm width)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-grid-2" style="margin-top: 10px;">
+                        <div class="form-group">
+                            <label for="cctv-lens">Lens / Focal Length</label>
                             <select id="cctv-lens">
                                 <option value="2.8">2.8mm Lens (110° HFOV)</option>
                                 <option value="4">4.0mm Lens (85° HFOV)</option>
@@ -1309,9 +1409,17 @@
                             <label for="cctv-color">Zone Color</label>
                             <input type="color" id="cctv-color" value="#14b8a6" style="height: 38px; padding: 2px; cursor: pointer;">
                         </div>
-                        <div class="form-group">
-                            <!-- spacer -->
+                    </div>
+                    
+                    <div style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: var(--radius-sm); border-left: 3px solid var(--color-accent);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
+                            <span style="font-weight: bold; font-size: 0.9rem; color: var(--text-primary);">Optical Calculations (DORI)</span>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary);">Dist = (Res × Focal) / (PPM × Sensor)</span>
                         </div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">
+                            Automatically updates DORI ranges based on resolution and focal length. Overwrite manually if needed.
+                        </div>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -1374,7 +1482,11 @@
         ];
 
         // Annotation/Measurement elements
-        let takeoffs = []; // { id, materialId, type, points: [{x, y}], page, physicalValue }
+        let takeoffs = []; // { id, materialId, type, points: [{x, y}], page, physicalValue, zone }
+        let annotations = []; // { id, type, points: [{x, y}], text, color, page }
+        let activeAnnotationMode = null; // null, 'text', 'cloud', 'dimension' 
+        let projectZones = ['Default']; // User-defined zones/locations
+        let activeZone = 'Default'; // Currently selected zone for new takeoffs
         
         // Active drawing state
         let activeDrawingPath = []; // Current line nodes
@@ -1382,6 +1494,7 @@
         let orthoEnabled = false; // Ortho mode toggle
         let rawMousePos = null; // Un-ortho, un-snapped raw coordinate position
         let customSvgSymbols = []; // { key, name, dataUrl } — user-imported SVG symbols
+        let globalSymbolScale = 1.0; // Scale multiplier for equipment symbols
         let selectedTakeoffId = null; // ID of the selected takeoff item
         let isDraggingSymbol = false; // Dragging state for select mode
         let isRotatingSymbol = false; // Rotating state for select mode
@@ -1563,6 +1676,7 @@
 
         // --- INITIALIZATION ---
         window.addEventListener('DOMContentLoaded', () => {
+            renderZoneSelect();
             renderMaterialsList();
             setupModeButtons();
             setupZoomAndPan();
@@ -1649,6 +1763,16 @@
             document.getElementById('btn-load-sample-dxf').addEventListener('click', loadSampleDXF);
             document.getElementById('btn-load-sample-dxf-empty').addEventListener('click', loadSampleDXF);
 
+            // Hook zone management
+            document.getElementById('btn-manage-zones').addEventListener('click', () => {
+                renderZoneSelect();
+                showModal(document.getElementById('zone-modal'));
+            });
+            document.getElementById('btn-add-zone').addEventListener('click', addZone);
+            document.getElementById('active-zone-select').addEventListener('change', (e) => {
+                activeZone = e.target.value;
+            });
+
             // Hook new material submits
             document.getElementById('btn-add-material').addEventListener('click', () => {
                 document.getElementById('mat-preset').value = 'custom';
@@ -1716,6 +1840,9 @@
                 handleCctvLensChange();
                 document.getElementById('cctv-hfov').dispatchEvent(new Event('input'));
             });
+            document.getElementById('cctv-resolution').addEventListener('change', updateCctvCalculations);
+            document.getElementById('cctv-sensor').addEventListener('change', updateCctvCalculations);
+            
             document.getElementById('cctv-hfov').addEventListener('input', (e) => {
                 const hfov = parseFloat(e.target.value);
                 const lensPreset = document.getElementById('cctv-lens');
@@ -1724,6 +1851,7 @@
                 else if (hfov === 55) lensPreset.value = '6';
                 else if (hfov === 28) lensPreset.value = '12';
                 else lensPreset.value = 'custom';
+                updateCctvCalculations();
             });
 
 
@@ -2368,7 +2496,8 @@
                         type: 'point',
                         points: [{ x: cx, y: cy }],
                         page: 1,
-                        physicalValue: 1
+                        physicalValue: 1,
+                        zone: activeZone
                     });
                 }
             });
@@ -2764,6 +2893,7 @@ EOF`;
                     targetMargin: 15,
                     radiusM: 10,
                     indoorAttenuation: false,
+                    dispersionAngle: 180,
                     color: '#eab30844'
                 }
             },
@@ -2789,7 +2919,34 @@ EOF`;
                     targetMargin: 15,
                     radiusM: 10,
                     indoorAttenuation: false,
+                    dispersionAngle: 180,
                     color: '#eab30844'
+                }
+            },
+            'paga_horn': { 
+                name: 'PAGA HORN LOUDSPEAKER (15W)', 
+                type: 'point', 
+                color: '#f97316', 
+                layer: 'E-PA-EQUP-HORN', 
+                waste: 0, 
+                slack: 0.0, 
+                isAerial: false, 
+                w: 0.0, 
+                T: 1, 
+                symbol: 'speaker', 
+                unit: 'pcs',
+                coverage: {
+                    type: 'paga',
+                    enabled: true,
+                    spl: 112.8,
+                    sensitivity: 101,
+                    power: 15,
+                    ambientNoise: 85,
+                    targetMargin: 15,
+                    radiusM: 20,
+                    indoorAttenuation: false,
+                    dispersionAngle: 90,
+                    color: '#f9731644'
                 }
             },
             'card_reader_indoor': { name: 'CARD READER (INDOOR)', type: 'point', color: '#3b82f6', layer: 'E-SE-EQUP-CARD', waste: 0, slack: 0.0, isAerial: false, w: 0.0, T: 1, symbol: 'card_reader_indoor', unit: 'pcs' },
@@ -2915,13 +3072,52 @@ EOF`;
             
             document.getElementById('paga-spl-calc').innerText = spl.toFixed(1) + ' dB';
             document.getElementById('paga-radius').value = radius.toFixed(1);
+            updatePagaSpacing(radius);
+        }
+        
+        function updatePagaSpacing(radius) {
+            const r = parseFloat(radius) || 0;
+            document.getElementById('paga-spacing-0').innerText = (r * 2).toFixed(1) + ' m';
+            document.getElementById('paga-spacing-min').innerText = (r * 1.414).toFixed(1) + ' m';
+            document.getElementById('paga-spacing-100').innerText = r.toFixed(1) + ' m';
+        }
+        
+        // Listen to manual radius override to update spacing dynamically
+        document.addEventListener('DOMContentLoaded', () => {
+            const radInput = document.getElementById('paga-radius');
+            if (radInput) {
+                radInput.addEventListener('input', (e) => {
+                    updatePagaSpacing(e.target.value);
+                });
+            }
+        });
+
+        function updateCctvCalculations() {
+            const lensVal = document.getElementById('cctv-lens').value;
+            const resVal = parseFloat(document.getElementById('cctv-resolution').value) || 3840;
+            const sensorVal = parseFloat(document.getElementById('cctv-sensor').value) || 5.27;
+            
+            if (lensVal !== 'custom') {
+                const focalLength = parseFloat(lensVal);
+                
+                // Formula: Distance = (Resolution * FocalLength) / (PPM * SensorWidth)
+                const calcDist = (ppm) => {
+                    return ((resVal * focalLength) / (ppm * sensorVal)).toFixed(1);
+                };
+                
+                document.getElementById('cctv-detection').value = calcDist(25);
+                document.getElementById('cctv-observation').value = calcDist(63);
+                document.getElementById('cctv-recognition').value = calcDist(125);
+                document.getElementById('cctv-identification').value = calcDist(250);
+            }
         }
 
         function handleCctvLensChange() {
             const val = document.getElementById('cctv-lens').value;
             if (val !== 'custom') {
                 const hfovs = { '2.8': 110, '4': 85, '6': 55, '12': 28 };
-                document.getElementById('cctv-hfov').value = hfovs[val];
+                document.getElementById('cctv-hfov').value = hfovs[val] || 110;
+                updateCctvCalculations();
             }
         }
 
@@ -2961,6 +3157,11 @@ EOF`;
                         document.getElementById('paga-attenuation').value = preset.coverage.indoorAttenuation ? 'indoor' : 'freefield';
                         document.getElementById('paga-radius').value = preset.coverage.radiusM;
                         document.getElementById('paga-color').value = preset.coverage.color.substring(0, 7);
+                        if (preset.coverage.dispersionAngle) {
+                            document.getElementById('paga-dispersion').value = preset.coverage.dispersionAngle;
+                        } else {
+                            document.getElementById('paga-dispersion').value = 360;
+                        }
                         updatePagaCalculations();
                     } else if (preset.coverage.type === 'cctv') {
                         const hfov = preset.coverage.hfov;
@@ -3093,6 +3294,82 @@ EOF`;
             return { rawLength, sagLength, takeoffLength };
         }
 
+        // --- ZONE MANAGEMENT ---
+        function renderZoneSelect() {
+            const select = document.getElementById('active-zone-select');
+            const list = document.getElementById('zone-list');
+            if (!select || !list) return;
+            
+            const currentVal = select.value || 'Default';
+            
+            select.innerHTML = '';
+            list.innerHTML = '';
+            
+            projectZones.forEach(zone => {
+                const opt = document.createElement('option');
+                opt.value = zone;
+                opt.innerText = zone;
+                select.appendChild(opt);
+                
+                const li = document.createElement('li');
+                li.style.padding = '6px 8px';
+                li.style.borderBottom = '1px solid var(--border)';
+                li.style.display = 'flex';
+                li.style.justifyContent = 'space-between';
+                li.style.alignItems = 'center';
+                
+                const span = document.createElement('span');
+                span.innerText = zone;
+                
+                const delBtn = document.createElement('button');
+                delBtn.className = 'btn btn-danger';
+                delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+                delBtn.style.padding = '4px';
+                delBtn.style.width = '24px';
+                delBtn.style.height = '24px';
+                delBtn.style.fontSize = '0.7rem';
+                if (zone === 'Default') {
+                    delBtn.style.visibility = 'hidden';
+                } else {
+                    delBtn.onclick = () => deleteZone(zone);
+                }
+                
+                li.appendChild(span);
+                li.appendChild(delBtn);
+                list.appendChild(li);
+            });
+            
+            if (projectZones.includes(currentVal)) {
+                select.value = currentVal;
+                activeZone = currentVal;
+            } else {
+                select.value = 'Default';
+                activeZone = 'Default';
+            }
+        }
+
+        function addZone() {
+            const input = document.getElementById('new-zone-input');
+            const val = input.value.trim();
+            if (val && !projectZones.includes(val)) {
+                projectZones.push(val);
+                input.value = '';
+                renderZoneSelect();
+            }
+        }
+
+        function deleteZone(zone) {
+            if (zone === 'Default') return;
+            if (confirm(`Are you sure you want to delete the zone "${zone}"? Any takeoffs in this zone will be moved to "Default".`)) {
+                projectZones = projectZones.filter(z => z !== zone);
+                takeoffs.forEach(t => {
+                    if (t.zone === zone) t.zone = 'Default';
+                });
+                renderZoneSelect();
+                renderTakeoffTable();
+            }
+        }
+
         function recalculateTakeoffMeasurements() {
             if (!calibration.pixelsPerUnit) return;
             
@@ -3212,6 +3489,7 @@ EOF`;
                         targetMargin: parseFloat(document.getElementById('paga-target-margin').value) || 15,
                         radiusM: parseFloat(document.getElementById('paga-radius').value) || 10,
                         indoorAttenuation: document.getElementById('paga-attenuation').value === 'indoor',
+                        dispersionAngle: parseInt(document.getElementById('paga-dispersion').value) || 360,
                         color: document.getElementById('paga-color').value + '44'
                     };
                 } else if (covType === 'cctv') {
@@ -3310,10 +3588,12 @@ EOF`;
 
 		function saveProjectState() {
 			const state = {
-				version: "1.0",
+				version: "1.1",
 				calibration: { ...calibration },
 				materials: materials.map(m => ({ ...m })),
 				takeoffs: takeoffs.map(t => ({ ...t })),
+				annotations: annotations.map(a => ({ ...a })),
+				projectZones: [...projectZones],
 				pageNum: pageNum
 			};
 
@@ -3348,13 +3628,30 @@ EOF`;
 						}
 
 						materials = state.materials;
-						takeoffs = state.takeoffs;
+						takeoffs = state.takeoffs.map(t => {
+							if (!t.zone) t.zone = 'Default';
+							return t;
+						});
+						
+						if (state.projectZones && Array.isArray(state.projectZones)) {
+							projectZones = state.projectZones;
+						} else {
+							projectZones = ['Default'];
+						}
+						
+						if (state.annotations && Array.isArray(state.annotations)) {
+							annotations = state.annotations;
+						} else {
+							annotations = [];
+						}
+						
 						if (state.pageNum !== undefined) {
 							pageNum = state.pageNum;
 							if (pdfDoc) renderPDFPage(pageNum);
 						}
 
 						recalculateTakeoffMeasurements();
+						renderZoneSelect();
 						renderMaterialsList();
 						renderTakeoffTable();
 						redrawFG();
@@ -3426,9 +3723,9 @@ EOF`;
 			}, 100);
 		}
 
-        function getMaterialSummary(matId) {
+        function getMaterialSummary(matId, zoneFilter = null) {
             const material = materials.find(m => m.id === matId);
-            const items = takeoffs.filter(t => t.materialId === matId);
+            const items = takeoffs.filter(t => t.materialId === matId && (!zoneFilter || t.zone === zoneFilter));
             const count = items.length;
             
             let totalRaw = 0;
@@ -3515,7 +3812,8 @@ EOF`;
                     type: 'path',
                     points: [...activeDrawingPath],
                     page: pageNum,
-                    physicalValue: 0
+                    physicalValue: 0,
+                    zone: activeZone
                 };
 
                 const material = materials.find(m => m.id === activeMaterialId);
@@ -3619,7 +3917,7 @@ EOF`;
         function setMode(mode) {
             currentMode = mode;
             
-            const modeBtnIds = ['tool-pan', 'tool-select', 'tool-point', 'tool-path', 'tool-delete'];
+            const modeBtnIds = ['tool-pan', 'tool-select', 'tool-point', 'tool-path', 'tool-delete', 'tool-text', 'tool-cloud', 'tool-dimension'];
             modeBtnIds.forEach(id => {
                 const btn = document.getElementById(id);
                 if (btn) btn.classList.remove('active');
@@ -3644,6 +3942,17 @@ EOF`;
             } else if (mode === 'delete') {
                 document.getElementById('tool-delete').classList.add('active');
                 helpBannerText.innerText = "Delete Mode: Click any placed counter symbol or linear run to remove it. MTO quantities update automatically.";
+            } else if (mode === 'annotation') {
+                if (activeAnnotationMode === 'text') {
+                    document.getElementById('tool-text').classList.add('active');
+                    helpBannerText.innerText = "Text Callout: Click to place a text callout on the drawing.";
+                } else if (activeAnnotationMode === 'cloud') {
+                    document.getElementById('tool-cloud').classList.add('active');
+                    helpBannerText.innerText = "Revision Cloud: Click points to draw a cloud. Double-click or Enter to finish.";
+                } else if (activeAnnotationMode === 'dimension') {
+                    document.getElementById('tool-dimension').classList.add('active');
+                    helpBannerText.innerText = "Dimension Line: Click start point, drag, and click end point to draw dimension.";
+                }
             }
             
             activeDrawingPath = [];
@@ -3729,6 +4038,23 @@ EOF`;
                 toggleOrthoMode();
             });
             updateOrthoToggleButton();
+
+            // Annotation Modes
+            document.getElementById('tool-text').addEventListener('click', () => {
+                if (!isDrawingLoaded()) return;
+                activeAnnotationMode = 'text';
+                setMode('annotation');
+            });
+            document.getElementById('tool-cloud').addEventListener('click', () => {
+                if (!isDrawingLoaded()) return;
+                activeAnnotationMode = 'cloud';
+                setMode('annotation');
+            });
+            document.getElementById('tool-dimension').addEventListener('click', () => {
+                if (!isDrawingLoaded()) return;
+                activeAnnotationMode = 'dimension';
+                setMode('annotation');
+            });
         }
 
         function toggleSnapMode() {
@@ -3769,16 +4095,20 @@ EOF`;
                     if (selected && selected.type === 'point') {
                         const pt = selected.points[0];
                         const angle = selected.angle || 0;
-                        const hx = pt.x + 35 * Math.sin(angle);
-                        const hy = pt.y - 35 * Math.cos(angle);
+                        const handleDist = 35 * globalSymbolScale;
+                        const hitRadius = 18 * globalSymbolScale;
+                        const handleHitRadius = Math.max(10, 10 * globalSymbolScale);
                         
-                        if (Math.hypot(coords.x - hx, coords.y - hy) <= 10) {
+                        const hx = pt.x + handleDist * Math.sin(angle);
+                        const hy = pt.y - handleDist * Math.cos(angle);
+                        
+                        if (Math.hypot(coords.x - hx, coords.y - hy) <= handleHitRadius) {
                             isRotatingSymbol = true;
                             rotationCenter = pt;
                             return;
                         }
                         
-                        if (Math.hypot(coords.x - pt.x, coords.y - pt.y) <= 18) {
+                        if (Math.hypot(coords.x - pt.x, coords.y - pt.y) <= hitRadius) {
                             isDraggingSymbol = true;
                             dragStartOffset = { x: coords.x - pt.x, y: coords.y - pt.y };
                             return;
@@ -3830,7 +4160,8 @@ EOF`;
                     points: [coords],
                     page: pageNum,
                     physicalValue: 1,
-                    angle: 0
+                    angle: 0,
+                    zone: activeZone
                 });
                 renderMaterialsList();
                 renderTakeoffTable();
@@ -3853,6 +4184,41 @@ EOF`;
                 }
                 activeDrawingPath.push(finalCoords);
                 redrawFG();
+            }
+            } else if (currentMode === 'annotation') {
+                if (activeAnnotationMode === 'text') {
+                    const text = prompt('Enter callout text:');
+                    if (text && text.trim() !== '') {
+                        annotations.push({
+                            id: 'annot-' + Date.now(),
+                            type: 'text',
+                            points: [coords],
+                            text: text.trim(),
+                            color: '#eab308',
+                            page: pageNum
+                        });
+                        redrawFG();
+                    }
+                } else if (activeAnnotationMode === 'cloud') {
+                    activeDrawingPath.push(coords);
+                    redrawFG();
+                } else if (activeAnnotationMode === 'dimension') {
+                    if (activeDrawingPath.length === 0) {
+                        activeDrawingPath.push(coords);
+                        redrawFG();
+                    } else {
+                        activeDrawingPath.push(coords);
+                        annotations.push({
+                            id: 'annot-' + Date.now(),
+                            type: 'dimension',
+                            points: [...activeDrawingPath],
+                            color: '#10b981',
+                            page: pageNum
+                        });
+                        activeDrawingPath = [];
+                        redrawFG();
+                    }
+                }
             }
         });
 
@@ -3889,7 +4255,7 @@ EOF`;
             } else if (currentMode === 'calibrate' && calibration.tempStart) {
                 calibration.tempEnd = coords;
                 redrawFG();
-            } else if (currentMode === 'path' && activeDrawingPath.length > 0) {
+            } else if ((currentMode === 'path' || currentMode === 'annotation') && activeDrawingPath.length > 0) {
                 redrawFG();
             } else if (currentMode === 'delete') {
                 redrawFG();
@@ -3924,6 +4290,17 @@ EOF`;
             if (currentMode === 'path' && activeDrawingPath.length > 1) {
                 activeDrawingPath.pop(); // remove double-clicked node
                 finishActivePath();
+            } else if (currentMode === 'annotation' && activeAnnotationMode === 'cloud' && activeDrawingPath.length > 1) {
+                activeDrawingPath.pop();
+                annotations.push({
+                    id: 'annot-' + Date.now(),
+                    type: 'cloud',
+                    points: [...activeDrawingPath],
+                    color: '#ef4444',
+                    page: pageNum
+                });
+                activeDrawingPath = [];
+                redrawFG();
             }
         });
 
@@ -3979,16 +4356,17 @@ EOF`;
             const pathThreshold = 9;
             let bestHit = null;
             let bestDistance = Infinity;
-            takeoffs.forEach(item => {
+
+            const checkItem = (item) => {
                 if (pdfDoc && item.page !== pageNum) return;
-                if (item.type === 'point') {
+                if (item.type === 'point' || item.type === 'text') {
                     const pt = item.points[0];
                     const d = Math.hypot(p.x - pt.x, p.y - pt.y);
                     if (d <= pointThreshold && d < bestDistance) {
                         bestDistance = d;
                         bestHit = item;
                     }
-                } else if (item.type === 'path' && item.points.length > 1) {
+                } else if ((item.type === 'path' || item.type === 'cloud' || item.type === 'dimension') && item.points.length > 1) {
                     for (let i = 0; i < item.points.length - 1; i++) {
                         const d = pointToSegmentDistance(p, item.points[i], item.points[i + 1]);
                         if (d <= pathThreshold && d < bestDistance) {
@@ -3996,7 +4374,6 @@ EOF`;
                             bestHit = item;
                         }
                     }
-                    // Make path vertices easy to remove even when clicking directly on a node.
                     item.points.forEach(pt => {
                         const d = Math.hypot(p.x - pt.x, p.y - pt.y);
                         if (d <= pointThreshold && d < bestDistance) {
@@ -4005,14 +4382,22 @@ EOF`;
                         }
                     });
                 }
-            });
+            };
+
+            takeoffs.forEach(checkItem);
+            annotations.forEach(checkItem);
+
             return bestHit;
         }
 
-        function deleteTakeoffById(takeoffId) {
-            const beforeCount = takeoffs.length;
-            takeoffs = takeoffs.filter(t => t.id !== takeoffId);
-            if (takeoffs.length !== beforeCount) {
+        function deleteTakeoffById(id) {
+            const beforeTakeoffCount = takeoffs.length;
+            const beforeAnnotCount = annotations.length;
+            
+            takeoffs = takeoffs.filter(t => t.id !== id);
+            annotations = annotations.filter(a => a.id !== id);
+            
+            if (takeoffs.length !== beforeTakeoffCount || annotations.length !== beforeAnnotCount) {
                 activeSnappedPoint = null;
                 renderMaterialsList();
                 renderTakeoffTable();
@@ -4621,30 +5006,62 @@ EOF`;
 
                         if (cov.type === 'paga') {
                             const radiusPx = cov.radiusM * calibration.pixelsPerUnit;
+                            const dispersion = cov.dispersionAngle || 360;
                             
-                            // Draw outer coverage circle
+                            // Acoustic contour scaling (Target - 5dB, Target, Target + 5dB)
+                            const attenFactor = cov.indoorAttenuation !== false ? 10 : 20;
+                            const innerRatio = Math.pow(10, -5 / attenFactor);
+                            const outerRatio = Math.pow(10, 5 / attenFactor);
+                            
+                            const radiusOuter = radiusPx * outerRatio; // Faintest/Furthest (-5dB)
+                            const radiusMid = radiusPx;                // Target SPL
+                            const radiusInner = radiusPx * innerRatio; // Loudest/Closest (+5dB)
+                            
                             ctxFg.save();
-                            ctxFg.beginPath();
-                            ctxFg.arc(p.x, p.y, radiusPx, 0, Math.PI * 2);
-                            ctxFg.fillStyle = cov.color || 'rgba(234, 179, 8, 0.15)';
-                            ctxFg.fill();
-                            
-                            // Outer dashed boundary
-                            ctxFg.strokeStyle = material.color;
-                            ctxFg.lineWidth = 1;
-                            ctxFg.setLineDash([4, 4]);
-                            ctxFg.stroke();
-
-                            // Draw inner strong coverage zone at 50% radius
-                            ctxFg.beginPath();
-                            ctxFg.arc(p.x, p.y, radiusPx * 0.5, 0, Math.PI * 2);
-                            ctxFg.fillStyle = cov.color ? cov.color.substring(0, 7) + '1f' : 'rgba(234, 179, 8, 0.08)';
-                            ctxFg.fill();
-                            ctxFg.strokeStyle = material.color;
-                            ctxFg.lineWidth = 0.75;
-                            ctxFg.setLineDash([2, 2]);
-                            ctxFg.stroke();
-                            
+                            if (dispersion >= 360) {
+                                const contours = [
+                                    { r: radiusOuter, fill: cov.color ? cov.color.substring(0, 7) + '11' : 'rgba(234, 179, 8, 0.06)', stroke: [6, 6] },
+                                    { r: radiusMid, fill: cov.color || 'rgba(234, 179, 8, 0.15)', stroke: [4, 4] },
+                                    { r: radiusInner, fill: cov.color ? cov.color.substring(0, 7) + '22' : 'rgba(234, 179, 8, 0.25)', stroke: [2, 2] }
+                                ];
+                                
+                                contours.forEach(contour => {
+                                    ctxFg.beginPath();
+                                    ctxFg.arc(p.x, p.y, contour.r, 0, Math.PI * 2);
+                                    ctxFg.fillStyle = contour.fill;
+                                    ctxFg.fill();
+                                    
+                                    ctxFg.strokeStyle = material.color;
+                                    ctxFg.lineWidth = 0.75;
+                                    ctxFg.setLineDash(contour.stroke);
+                                    ctxFg.stroke();
+                                });
+                            } else {
+                                const dispRad = dispersion * Math.PI / 180;
+                                // Invert the angle so 0 points UP
+                                const startAngle = angle - dispRad / 2 - Math.PI / 2;
+                                const endAngle = angle + dispRad / 2 - Math.PI / 2;
+                                
+                                const contours = [
+                                    { r: radiusOuter, fill: cov.color ? cov.color.substring(0, 7) + '11' : 'rgba(234, 179, 8, 0.06)', stroke: [6, 6] },
+                                    { r: radiusMid, fill: cov.color || 'rgba(234, 179, 8, 0.15)', stroke: [4, 4] },
+                                    { r: radiusInner, fill: cov.color ? cov.color.substring(0, 7) + '22' : 'rgba(234, 179, 8, 0.25)', stroke: [2, 2] }
+                                ];
+                                
+                                contours.forEach(contour => {
+                                    ctxFg.beginPath();
+                                    ctxFg.moveTo(p.x, p.y);
+                                    ctxFg.arc(p.x, p.y, contour.r, startAngle, endAngle);
+                                    ctxFg.closePath();
+                                    ctxFg.fillStyle = contour.fill;
+                                    ctxFg.fill();
+                                    
+                                    ctxFg.strokeStyle = material.color;
+                                    ctxFg.lineWidth = 0.75;
+                                    ctxFg.setLineDash(contour.stroke);
+                                    ctxFg.stroke();
+                                });
+                            }
                             ctxFg.restore();
                         } else if (cov.type === 'cctv') {
                             const hfovRad = (cov.hfov || 110) * Math.PI / 180;
@@ -4702,28 +5119,31 @@ EOF`;
                     const p = item.points[0];
                     const sym = material.symbol || 'circle';
                     const angle = item.angle || 0;
-                    drawEquipmentSymbol(ctxFg, p.x, p.y, sym, material.color, 24, angle);
+                    drawEquipmentSymbol(ctxFg, p.x, p.y, sym, material.color, 24 * globalSymbolScale, angle);
                     
                     if (currentMode === 'select' && item.id === selectedTakeoffId) {
                         ctxFg.save();
                         ctxFg.translate(p.x, p.y);
                         ctxFg.rotate(angle);
                         
+                        const halfSize = 16 * globalSymbolScale;
+                        const handleLength = 35 * globalSymbolScale;
+                        
                         ctxFg.strokeStyle = '#10b981';
                         ctxFg.lineWidth = 1.5;
                         ctxFg.setLineDash([4, 3]);
-                        ctxFg.strokeRect(-16, -16, 32, 32);
+                        ctxFg.strokeRect(-halfSize, -halfSize, halfSize * 2, halfSize * 2);
                         
                         ctxFg.beginPath();
-                        ctxFg.moveTo(0, -16);
-                        ctxFg.lineTo(0, -35);
+                        ctxFg.moveTo(0, -halfSize);
+                        ctxFg.lineTo(0, -handleLength);
                         ctxFg.strokeStyle = '#10b981';
                         ctxFg.lineWidth = 1.5;
                         ctxFg.setLineDash([]);
                         ctxFg.stroke();
                         
                         ctxFg.beginPath();
-                        ctxFg.arc(0, -35, 4, 0, 2 * Math.PI);
+                        ctxFg.arc(0, -handleLength, 4, 0, 2 * Math.PI);
                         ctxFg.fillStyle = '#ffffff';
                         ctxFg.fill();
                         ctxFg.strokeStyle = '#10b981';
@@ -4803,6 +5223,119 @@ EOF`;
                 ctxFg.fillText(labelText, calibration.tempEnd.x + 14, calibration.tempEnd.y - 8);
             }
 
+            // 2.5 Draw Annotations
+            annotations.forEach(item => {
+                if (pdfDoc && item.page !== pageNum) return;
+
+                if (item.type === 'text') {
+                    const p = item.points[0];
+                    ctxFg.font = 'bold 14px Inter';
+                    const textWidth = ctxFg.measureText(item.text).width;
+                    
+                    // Draw text background bubble
+                    ctxFg.fillStyle = 'rgba(30, 41, 59, 0.85)';
+                    ctxFg.beginPath();
+                    if (ctxFg.roundRect) {
+                        ctxFg.roundRect(p.x - 8, p.y - 18, textWidth + 16, 26, 4);
+                    } else {
+                        ctxFg.rect(p.x - 8, p.y - 18, textWidth + 16, 26);
+                    }
+                    ctxFg.fill();
+                    ctxFg.strokeStyle = item.color;
+                    ctxFg.lineWidth = 1.5;
+                    ctxFg.stroke();
+                    
+                    // Draw text
+                    ctxFg.fillStyle = item.color;
+                    ctxFg.fillText(item.text, p.x, p.y);
+                } else if (item.type === 'cloud') {
+                    ctxFg.strokeStyle = item.color;
+                    ctxFg.lineWidth = 2;
+                    ctxFg.fillStyle = item.color.substring(0, 7) + '22'; // 15% opacity
+                    ctxFg.beginPath();
+                    if (item.points.length > 0) {
+                        ctxFg.moveTo(item.points[0].x, item.points[0].y);
+                        for (let i = 1; i < item.points.length; i++) {
+                            const p1 = item.points[i-1];
+                            const p2 = item.points[i];
+                            const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+                            const numScallops = Math.max(1, Math.floor(dist / 20));
+                            for (let j = 1; j <= numScallops; j++) {
+                                const t = j / numScallops;
+                                const px = p1.x + (p2.x - p1.x) * t;
+                                const py = p1.y + (p2.y - p1.y) * t;
+                                const normalX = -(p2.y - p1.y) / dist;
+                                const normalY = (p2.x - p1.x) / dist;
+                                const cpX = p1.x + (p2.x - p1.x) * (t - 0.5/numScallops) + normalX * 10;
+                                const cpY = p1.y + (p2.y - p1.y) * (t - 0.5/numScallops) + normalY * 10;
+                                ctxFg.quadraticCurveTo(cpX, cpY, px, py);
+                            }
+                        }
+                        // Close cloud
+                        if (item.points.length > 2) {
+                            const p1 = item.points[item.points.length-1];
+                            const p2 = item.points[0];
+                            const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+                            const numScallops = Math.max(1, Math.floor(dist / 20));
+                            for (let j = 1; j <= numScallops; j++) {
+                                const t = j / numScallops;
+                                const px = p1.x + (p2.x - p1.x) * t;
+                                const py = p1.y + (p2.y - p1.y) * t;
+                                const normalX = -(p2.y - p1.y) / dist;
+                                const normalY = (p2.x - p1.x) / dist;
+                                const cpX = p1.x + (p2.x - p1.x) * (t - 0.5/numScallops) + normalX * 10;
+                                const cpY = p1.y + (p2.y - p1.y) * (t - 0.5/numScallops) + normalY * 10;
+                                ctxFg.quadraticCurveTo(cpX, cpY, px, py);
+                            }
+                        }
+                    }
+                    ctxFg.stroke();
+                    ctxFg.fill();
+                } else if (item.type === 'dimension') {
+                    if (item.points.length === 2) {
+                        const p1 = item.points[0];
+                        const p2 = item.points[1];
+                        ctxFg.strokeStyle = item.color;
+                        ctxFg.lineWidth = 1;
+                        ctxFg.beginPath();
+                        ctxFg.moveTo(p1.x, p1.y);
+                        ctxFg.lineTo(p2.x, p2.y);
+                        ctxFg.stroke();
+                        
+                        // Draw arrows
+                        const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+                        ctxFg.fillStyle = item.color;
+                        ctxFg.beginPath();
+                        ctxFg.moveTo(p1.x, p1.y);
+                        ctxFg.lineTo(p1.x + 8*Math.cos(angle + Math.PI/6), p1.y + 8*Math.sin(angle + Math.PI/6));
+                        ctxFg.lineTo(p1.x + 8*Math.cos(angle - Math.PI/6), p1.y + 8*Math.sin(angle - Math.PI/6));
+                        ctxFg.fill();
+                        ctxFg.beginPath();
+                        ctxFg.moveTo(p2.x, p2.y);
+                        ctxFg.lineTo(p2.x - 8*Math.cos(angle + Math.PI/6), p2.y - 8*Math.sin(angle + Math.PI/6));
+                        ctxFg.lineTo(p2.x - 8*Math.cos(angle - Math.PI/6), p2.y - 8*Math.sin(angle - Math.PI/6));
+                        ctxFg.fill();
+                        
+                        // Text
+                        const pxDist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+                        const labelText = calibration.pixelsPerUnit 
+                            ? `${(pxDist / calibration.pixelsPerUnit).toFixed(2)} ${calibration.unit}` 
+                            : `${Math.round(pxDist)} px`;
+                        
+                        ctxFg.font = 'bold 11px Inter';
+                        const textWidth = ctxFg.measureText(labelText).width;
+                        const midX = (p1.x + p2.x)/2;
+                        const midY = (p1.y + p2.y)/2;
+                        
+                        ctxFg.fillStyle = '#1e293b';
+                        ctxFg.fillRect(midX - textWidth/2 - 4, midY - 20, textWidth + 8, 16);
+                        ctxFg.strokeRect(midX - textWidth/2 - 4, midY - 20, textWidth + 8, 16);
+                        ctxFg.fillStyle = '#ffffff';
+                        ctxFg.fillText(labelText, midX - textWidth/2, midY - 8);
+                    }
+                }
+            });
+
             // 3. Draw active cable path drawing
             if (currentMode === 'path' && activeDrawingPath.length > 0) {
                 const activeMat = materials.find(m => m.id === activeMaterialId);
@@ -4860,6 +5393,55 @@ EOF`;
                     ctxFg.stroke();
                 });
             }
+
+            // 4. Draw active annotations (cloud or dimension in progress)
+            if (currentMode === 'annotation' && activeDrawingPath.length > 0) {
+                if (activeAnnotationMode === 'cloud') {
+                    const color = '#ef4444';
+                    ctxFg.strokeStyle = color;
+                    ctxFg.lineWidth = 2;
+                    ctxFg.setLineDash([4, 4]); // dashed while drawing
+                    ctxFg.beginPath();
+                    ctxFg.moveTo(activeDrawingPath[0].x, activeDrawingPath[0].y);
+                    for (let i = 1; i < activeDrawingPath.length; i++) {
+                        ctxFg.lineTo(activeDrawingPath[i].x, activeDrawingPath[i].y);
+                    }
+                    if (tempMousePos) {
+                        ctxFg.lineTo(tempMousePos.x, tempMousePos.y);
+                    }
+                    ctxFg.stroke();
+                    ctxFg.setLineDash([]);
+                } else if (activeAnnotationMode === 'dimension') {
+                    const color = '#10b981';
+                    const p1 = activeDrawingPath[0];
+                    const p2 = tempMousePos || p1;
+                    
+                    ctxFg.strokeStyle = color;
+                    ctxFg.lineWidth = 1;
+                    ctxFg.setLineDash([4, 4]);
+                    ctxFg.beginPath();
+                    ctxFg.moveTo(p1.x, p1.y);
+                    ctxFg.lineTo(p2.x, p2.y);
+                    ctxFg.stroke();
+                    ctxFg.setLineDash([]);
+                    
+                    const pxDist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+                    const labelText = calibration.pixelsPerUnit 
+                        ? `${(pxDist / calibration.pixelsPerUnit).toFixed(2)} ${calibration.unit}` 
+                        : `${Math.round(pxDist)} px`;
+                    
+                    ctxFg.font = 'bold 11px Inter';
+                    const textWidth = ctxFg.measureText(labelText).width;
+                    const midX = (p1.x + p2.x)/2;
+                    const midY = (p1.y + p2.y)/2;
+                    
+                    ctxFg.fillStyle = '#1e293b';
+                    ctxFg.fillRect(midX - textWidth/2 - 4, midY - 20, textWidth + 8, 16);
+                    ctxFg.strokeRect(midX - textWidth/2 - 4, midY - 20, textWidth + 8, 16);
+                    ctxFg.fillStyle = '#ffffff';
+                    ctxFg.fillText(labelText, midX - textWidth/2, midY - 8);
+                }
+            }
         }
 
         function varColor(name) {
@@ -4884,6 +5466,14 @@ EOF`;
                 if (!isDrawingLoaded()) return;
                 setZoom(1.0);
             });
+            
+            const symbolScaleSlider = document.getElementById('symbol-scale-slider');
+            if (symbolScaleSlider) {
+                symbolScaleSlider.addEventListener('input', (e) => {
+                    globalSymbolScale = parseFloat(e.target.value) || 1.0;
+                    if (isDrawingLoaded()) redrawFG();
+                });
+            }
 
             workspace.addEventListener('wheel', (e) => {
                 if (!isDrawingLoaded()) return;
@@ -5009,82 +5599,96 @@ EOF`;
         function renderTakeoffTable() {
             takeoffTableBody.innerHTML = '';
             
-            materials.forEach(m => {
-                const summary = getMaterialSummary(m.id);
-                if (summary.count === 0 && summary.totalTakeoff === 0 && summary.totalPixels === 0) return; 
-
-                const row = document.createElement('tr');
-                const activeUnit = m.type === 'path' ? (calibration.unit || 'm') : (m.unit || 'pcs');
+            projectZones.forEach(zone => {
+                let zoneHasMaterials = false;
+                const zoneHeaderRow = document.createElement('tr');
+                zoneHeaderRow.innerHTML = `<td colspan="8" style="background-color: var(--surface); color: var(--color-primary); font-weight: bold; text-align: center; border-top: 2px solid var(--color-primary);">--- ZONE: ${zone.toUpperCase()} ---</td>`;
                 
-                let rawValStr = '';
-                let modifiersStr = '';
-                let totalValStr = '';
+                const zoneRows = [];
+                
+                materials.forEach(m => {
+                    const summary = getMaterialSummary(m.id, zone);
+                    if (summary.count === 0 && summary.totalTakeoff === 0 && summary.totalPixels === 0) return; 
 
-                if (m.type === 'path') {
-                    if (calibration.pixelsPerUnit) {
-                        rawValStr = `${summary.totalRaw.toFixed(1)} ${activeUnit}`;
-                        
-                        let mods = [];
-                        if (m.isAerial) {
-                            const sagAdded = summary.totalSag - summary.totalRaw;
-                            if (sagAdded > 0.01) {
-                                mods.push(`+${sagAdded.toFixed(1)} ${activeUnit} aerial sag`);
+                    zoneHasMaterials = true;
+                    const row = document.createElement('tr');
+                    const activeUnit = m.type === 'path' ? (calibration.unit || 'm') : (m.unit || 'pcs');
+                    
+                    let rawValStr = '';
+                    let modifiersStr = '';
+                    let totalValStr = '';
+
+                    if (m.type === 'path') {
+                        if (calibration.pixelsPerUnit) {
+                            rawValStr = `${summary.totalRaw.toFixed(1)} ${activeUnit}`;
+                            
+                            let mods = [];
+                            if (m.isAerial) {
+                                const sagAdded = summary.totalSag - summary.totalRaw;
+                                if (sagAdded > 0.01) {
+                                    mods.push(`+${sagAdded.toFixed(1)} ${activeUnit} aerial sag`);
+                                }
                             }
+                            if (m.waste > 0) {
+                                mods.push(`+${m.waste}% waste`);
+                            }
+                            if (m.slack > 0) {
+                                const totalSlack = summary.count * m.slack;
+                                mods.push(`+${totalSlack.toFixed(1)} ${activeUnit} slack`);
+                            }
+                            modifiersStr = mods.length > 0 ? mods.join(', ') : 'None';
+                            totalValStr = `${summary.totalTakeoff.toFixed(1)}`;
+                        } else {
+                            rawValStr = `${Math.round(summary.totalPixels)} px`;
+                            modifiersStr = 'Uncalibrated';
+                            totalValStr = '--';
                         }
-                        if (m.waste > 0) {
-                            mods.push(`+${m.waste}% waste`);
-                        }
-                        if (m.slack > 0) {
-                            const totalSlack = summary.count * m.slack;
-                            mods.push(`+${totalSlack.toFixed(1)} ${activeUnit} slack`);
-                        }
-                        modifiersStr = mods.length > 0 ? mods.join(', ') : 'None';
-                        totalValStr = `${summary.totalTakeoff.toFixed(1)}`;
                     } else {
-                        rawValStr = `${Math.round(summary.totalPixels)} px`;
-                        modifiersStr = 'Uncalibrated';
-                        totalValStr = '--';
-                    }
-                } else {
-                    const isMetric = m.unit === 'm' || m.unit === 'ft';
-                    rawValStr = `${summary.count} markers`;
-                    if (isMetric) {
-                        modifiersStr = `+${summary.totalTakeoff.toFixed(1)} ${activeUnit} vertical run (${m.slack.toFixed(1)} ${activeUnit} each)`;
-                        totalValStr = `${summary.totalTakeoff.toFixed(1)}`;
-                    } else {
-                        let mods = [];
-                        if (m.slack > 0) {
-                            mods.push(`+${(summary.count * m.slack).toFixed(1)} ${calibration.unit || 'm'} linked cable pull`);
+                        const isMetric = m.unit === 'm' || m.unit === 'ft';
+                        rawValStr = `${summary.count} markers`;
+                        if (isMetric) {
+                            modifiersStr = `+${summary.totalTakeoff.toFixed(1)} ${activeUnit} vertical run (${m.slack.toFixed(1)} ${activeUnit} each)`;
+                            totalValStr = `${summary.totalTakeoff.toFixed(1)}`;
+                        } else {
+                            let mods = [];
+                            if (m.slack > 0) {
+                                mods.push(`+${(summary.count * m.slack).toFixed(1)} ${calibration.unit || 'm'} linked cable pull`);
+                            }
+                            modifiersStr = mods.length > 0 ? mods.join(', ') : 'None';
+                            totalValStr = `${summary.count}`;
                         }
-                        modifiersStr = mods.length > 0 ? mods.join(', ') : 'None';
-                        totalValStr = `${summary.count}`;
                     }
+
+                    const layerBadge = m.layer ? `<div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;"><i class="fa-solid fa-layer-group"></i> ${m.layer}</div>` : '';
+
+                    row.innerHTML = `
+                        <td>
+                            <strong>${m.name}</strong>
+                            ${layerBadge}
+                        </td>
+                        <td><span class="material-type-tag">${m.type === 'path' ? 'Linear Run' : 'Counter Pin'}</span></td>
+                        <td><span style="display:inline-block; width:20px; height:10px; border-radius:3px; background-color:${m.color}"></span></td>
+                        <td style="color:var(--text-secondary);">${rawValStr}</td>
+                        <td style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">${modifiersStr}</td>
+                        <td style="font-weight: 700; color: var(--color-success); font-size:1.05rem;">${totalValStr}</td>
+                        <td>${m.type === 'path' && !calibration.pixelsPerUnit ? '--' : activeUnit}</td>
+                        <td>
+                            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem; width:auto; display:inline-flex;" onclick="clearMaterialTakeoffs('${m.id}', '${zone}')">Clear Points</button>
+                        </td>
+                    `;
+                    zoneRows.push(row);
+                });
+                
+                if (zoneHasMaterials) {
+                    takeoffTableBody.appendChild(zoneHeaderRow);
+                    zoneRows.forEach(r => takeoffTableBody.appendChild(r));
                 }
-
-                const layerBadge = m.layer ? `<div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;"><i class="fa-solid fa-layer-group"></i> ${m.layer}</div>` : '';
-
-                row.innerHTML = `
-                    <td>
-                        <strong>${m.name}</strong>
-                        ${layerBadge}
-                    </td>
-                    <td><span class="material-type-tag">${m.type === 'path' ? 'Linear Run' : 'Counter Pin'}</span></td>
-                    <td><span style="display:inline-block; width:20px; height:10px; border-radius:3px; background-color:${m.color}"></span></td>
-                    <td style="color:var(--text-secondary);">${rawValStr}</td>
-                    <td style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">${modifiersStr}</td>
-                    <td style="font-weight: 700; color: var(--color-success); font-size:1.05rem;">${totalValStr}</td>
-                    <td>${m.type === 'path' && !calibration.pixelsPerUnit ? '--' : activeUnit}</td>
-                    <td>
-                        <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem; width:auto; display:inline-flex;" onclick="clearMaterialTakeoffs('${m.id}')">Clear Points</button>
-                    </td>
-                `;
-                takeoffTableBody.appendChild(row);
             });
         }
 
-        function clearMaterialTakeoffs(matId) {
-            if (confirm('Remove all placed points/lines for this material?')) {
-                takeoffs = takeoffs.filter(t => t.materialId !== matId);
+        function clearMaterialTakeoffs(matId, zone) {
+            if (confirm(`Remove all placed points/lines for this material in zone "${zone}"?`)) {
+                takeoffs = takeoffs.filter(t => !(t.materialId === matId && t.zone === zone));
                 renderMaterialsList();
                 renderTakeoffTable();
                 redrawFG();
@@ -5103,49 +5707,51 @@ EOF`;
             csvContent += 'Antigravity Telecom Material Takeoff Report\r\n';
             csvContent += `Generated: ${new Date().toLocaleString()}\r\n`;
             csvContent += `Calibration scale: 1 ${calibration.unit} = ${calibration.pixelsPerUnit ? calibration.pixelsPerUnit.toFixed(2) : 'Not Calibrated'} px\r\n\r\n`;
-            csvContent += 'Material Name,Layer,Type,Raw Measured,Waste & Sag Modifiers,Total Takeoff,Unit,Run Count\r\n';
+            csvContent += 'Zone,Material Name,Layer,Type,Raw Measured,Waste & Sag Modifiers,Total Takeoff,Unit,Run Count\r\n';
 
-            materials.forEach(m => {
-                const summary = getMaterialSummary(m.id);
-                if (summary.count === 0 && summary.totalTakeoff === 0 && summary.totalPixels === 0) return;
+            projectZones.forEach(zone => {
+                materials.forEach(m => {
+                    const summary = getMaterialSummary(m.id, zone);
+                    if (summary.count === 0 && summary.totalTakeoff === 0 && summary.totalPixels === 0) return;
 
-                const activeUnit = m.type === 'path' ? (calibration.unit || 'm') : (m.unit || 'pcs');
-                let rawVal = '0';
-                let modifiers = '';
-                let totalVal = '0';
+                    const activeUnit = m.type === 'path' ? (calibration.unit || 'm') : (m.unit || 'pcs');
+                    let rawVal = '0';
+                    let modifiers = '';
+                    let totalVal = '0';
 
-                if (m.type === 'path') {
-                    if (calibration.pixelsPerUnit) {
-                        rawVal = summary.totalRaw.toFixed(2);
-                        totalVal = summary.totalTakeoff.toFixed(2);
-                        
-                        let mods = [];
-                        if (m.isAerial) mods.push(`Aerial sag (w=${m.w}kg/m T=${m.T}kg)`);
-                        if (m.waste > 0) mods.push(`+${m.waste}% waste`);
-                        if (m.slack > 0) mods.push(`+${m.slack}m slack/run`);
-                        modifiers = mods.join(' | ');
-                    } else {
-                        rawVal = `${Math.round(summary.totalPixels)} px`;
-                        modifiers = 'Uncalibrated';
-                        totalVal = '--';
-                    }
-                } else {
-                    const isMetric = m.unit === 'm' || m.unit === 'ft';
-                    rawVal = summary.count;
-                    if (isMetric) {
-                        totalVal = summary.totalTakeoff.toFixed(2);
-                        modifiers = `+${summary.totalTakeoff.toFixed(2)} ${activeUnit} vertical run (${m.slack} ${activeUnit} each)`;
-                    } else {
-                        totalVal = summary.count;
-                        if (m.slack > 0) {
-                            modifiers = `+${m.slack}m conduit slack/point`;
+                    if (m.type === 'path') {
+                        if (calibration.pixelsPerUnit) {
+                            rawVal = summary.totalRaw.toFixed(2);
+                            totalVal = summary.totalTakeoff.toFixed(2);
+                            
+                            let mods = [];
+                            if (m.isAerial) mods.push(`Aerial sag (w=${m.w}kg/m T=${m.T}kg)`);
+                            if (m.waste > 0) mods.push(`+${m.waste}% waste`);
+                            if (m.slack > 0) mods.push(`+${m.slack}m slack/run`);
+                            modifiers = mods.join(' | ');
                         } else {
-                            modifiers = 'None';
+                            rawVal = `${Math.round(summary.totalPixels)} px`;
+                            modifiers = 'Uncalibrated';
+                            totalVal = '--';
+                        }
+                    } else {
+                        const isMetric = m.unit === 'm' || m.unit === 'ft';
+                        rawVal = summary.count;
+                        if (isMetric) {
+                            totalVal = summary.totalTakeoff.toFixed(2);
+                            modifiers = `+${summary.totalTakeoff.toFixed(2)} ${activeUnit} vertical run (${m.slack} ${activeUnit} each)`;
+                        } else {
+                            totalVal = summary.count;
+                            if (m.slack > 0) {
+                                modifiers = `+${m.slack}m conduit slack/point`;
+                            } else {
+                                modifiers = 'None';
+                            }
                         }
                     }
-                }
 
-                csvContent += `"${m.name}","${m.layer || ''}","${m.type === 'path' ? 'Linear' : 'Count'}",${rawVal},"${modifiers}",${totalVal},"${activeUnit}",${summary.count}\r\n`;
+                    csvContent += `"${zone}","${m.name}","${m.layer || ''}","${m.type === 'path' ? 'Linear' : 'Count'}",${rawVal},"${modifiers}",${totalVal},"${activeUnit}",${summary.count}\r\n`;
+                });
             });
 
             // Append Coverage Study Summary Section to CSV
