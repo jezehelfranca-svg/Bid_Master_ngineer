@@ -860,6 +860,32 @@
                 </div>
             </div>
 
+            <!-- Selected Item Properties -->
+            <div class="sidebar-section" id="properties-section" style="display: none; background: rgba(56, 189, 248, 0.05); border-left: 3px solid #38bdf8;">
+                <div class="sidebar-section-title" style="color: #38bdf8;">Selected Properties</div>
+                
+                <div class="form-group" style="margin-bottom: 8px;">
+                    <label for="prop-material" style="font-size: 0.75rem;">Assigned Material</label>
+                    <select id="prop-material" style="font-size: 0.8rem; padding: 4px; height: auto;"></select>
+                </div>
+                
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="prop-angle" style="font-size: 0.75rem;">Angle (°)</label>
+                        <input type="number" id="prop-angle" style="font-size: 0.8rem; padding: 4px; height: auto;" min="0" max="360">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label for="prop-value" style="font-size: 0.75rem;">Value / Len</label>
+                        <input type="number" id="prop-value" style="font-size: 0.8rem; padding: 4px; height: auto;" min="0" step="any">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 8px;">
+                    <label for="prop-zone" style="font-size: 0.75rem;">Zone Override</label>
+                    <input type="text" id="prop-zone" style="font-size: 0.8rem; padding: 4px; height: auto;">
+                </div>
+            </div>
+
             <!-- CAD Layers List Manager (Only visible for DXF CAD layouts) -->
             <div class="sidebar-section" id="cad-layers-section" style="display: none;">
                 <div class="sidebar-section-title">CAD Layers</div>
@@ -1828,6 +1854,15 @@
                 }
             });
             document.getElementById('mat-color').addEventListener('input', updateSymbolPreview);
+
+            // Hook properties panel listeners
+            ['prop-material', 'prop-angle', 'prop-value', 'prop-zone'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', applyPropertyChanges);
+                    el.addEventListener('change', applyPropertyChanges); // For select element
+                }
+            });
 
             // Hook coverage settings listeners
             document.getElementById('mat-coverage-type').addEventListener('change', updateModalFieldVisibilities);
@@ -3189,6 +3224,56 @@ EOF`;
             updateSymbolPreview();
         }
 
+        function updatePropertiesPanel() {
+            const panel = document.getElementById('properties-section');
+            if (!panel) return;
+
+            if (currentMode !== 'select' || !selectedTakeoffId) {
+                panel.style.display = 'none';
+                return;
+            }
+
+            const takeoff = takeoffs.find(t => t.id === selectedTakeoffId);
+            if (!takeoff) {
+                panel.style.display = 'none';
+                return;
+            }
+
+            panel.style.display = 'block';
+
+            // Populate Material Dropdown
+            const matSelect = document.getElementById('prop-material');
+            matSelect.innerHTML = '';
+            materials.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.innerText = m.name;
+                matSelect.appendChild(opt);
+            });
+            matSelect.value = takeoff.materialId;
+
+            // Populate inputs
+            document.getElementById('prop-angle').value = Math.round((takeoff.angle || 0) * 180 / Math.PI);
+            document.getElementById('prop-zone').value = takeoff.zone || '';
+            document.getElementById('prop-value').value = takeoff.physicalValue || 0;
+
+            document.getElementById('prop-angle').disabled = takeoff.type === 'path';
+        }
+
+        function applyPropertyChanges() {
+            if (!selectedTakeoffId) return;
+            const takeoff = takeoffs.find(t => t.id === selectedTakeoffId);
+            if (!takeoff) return;
+
+            takeoff.materialId = document.getElementById('prop-material').value;
+            takeoff.angle = (parseFloat(document.getElementById('prop-angle').value) || 0) * Math.PI / 180;
+            takeoff.zone = document.getElementById('prop-zone').value;
+            takeoff.physicalValue = parseFloat(document.getElementById('prop-value').value) || 0;
+
+            renderTakeoffTable();
+            redrawFG();
+        }
+
         function updateModalFieldVisibilities() {
             const style = document.getElementById('mat-type').value;
             const isAerial = document.getElementById('mat-aerial').checked;
@@ -3923,6 +4008,11 @@ EOF`;
                 if (btn) btn.classList.remove('active');
             });
             
+            if (mode !== 'select') {
+                selectedTakeoffId = null;
+            }
+            updatePropertiesPanel();
+            
             if (mode === 'pan') {
                 document.getElementById('tool-pan').classList.add('active');
                 helpBannerText.innerText = "Navigation Mode: Drag mouse to pan. Ctrl + Scroll to Zoom.";
@@ -4113,20 +4203,33 @@ EOF`;
                             dragStartOffset = { x: coords.x - pt.x, y: coords.y - pt.y };
                             return;
                         }
+                    } else if (selected && (selected.type === 'path' || selected.type === 'text')) {
+                        // Quick hit test for dragging paths and texts
+                        const hit = findTakeoffAtPoint(coords);
+                        if (hit && hit.id === selectedTakeoffId) {
+                            isDraggingSymbol = true;
+                            dragStartOffset = { x: coords.x - selected.points[0].x, y: coords.y - selected.points[0].y };
+                            return;
+                        }
                     }
                 }
                 
                 const hit = findTakeoffAtPoint(coords);
-                if (hit && hit.type === 'point') {
+                if (hit) {
                     selectedTakeoffId = hit.id;
-                    const pt = hit.points[0];
-                    isDraggingSymbol = true;
-                    dragStartOffset = { x: coords.x - pt.x, y: coords.y - pt.y };
-                    redrawFG();
+                    updatePropertiesPanel();
+                    if (hit.type === 'point') {
+                        isDraggingSymbol = true;
+                        dragStartOffset = { x: coords.x - hit.points[0].x, y: coords.y - hit.points[0].y };
+                    } else if (hit.type === 'path' || hit.type === 'text') {
+                        isDraggingSymbol = true;
+                        dragStartOffset = { x: coords.x - hit.points[0].x, y: coords.y - hit.points[0].y };
+                    }
                 } else {
                     selectedTakeoffId = null;
-                    redrawFG();
+                    updatePropertiesPanel();
                 }
+                redrawFG();
             } else if (currentMode === 'calibrate') {
                 if (!calibration.tempStart) {
                     calibration.tempStart = coords;
@@ -4240,7 +4343,12 @@ EOF`;
             } else if (isDraggingSymbol && selectedTakeoffId) {
                 const selected = takeoffs.find(t => t.id === selectedTakeoffId);
                 if (selected && selected.type === 'point') {
-                    selected.points[0] = { x: coords.x - dragStartOffset.x, y: coords.y - dragStartOffset.y };
+                    selected.points[0] = { x: coords.x + dragStartOffset.x, y: coords.y + dragStartOffset.y };
+                    redrawFG();
+                } else if (selected && (selected.type === 'path' || selected.type === 'text')) {
+                    const dx = coords.x + dragStartOffset.x - selected.points[0].x;
+                    const dy = coords.y + dragStartOffset.y - selected.points[0].y;
+                    selected.points = selected.points.map(p => ({ x: p.x + dx, y: p.y + dy }));
                     redrawFG();
                 }
             } else if (isRotatingSymbol && selectedTakeoffId) {
@@ -4270,6 +4378,7 @@ EOF`;
             } else if (isDraggingSymbol || isRotatingSymbol) {
                 isDraggingSymbol = false;
                 isRotatingSymbol = false;
+                if (selectedTakeoffId) updatePropertiesPanel();
                 renderTakeoffTable();
             } else if (currentMode === 'calibrate' && isMouseDown) {
                 const p1 = calibration.tempStart;
