@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Calculators - Telecom Design Suite</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0f172a;
+            --bg-panel: #1e293b;
+            --bg-elevated: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: #334155;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: var(--text-primary);
+            font-size: 2rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1000px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--bg-panel);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+        }
+
+        .panel h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--accent);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        .form-group select:focus, .form-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .result-box {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--accent);
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        .result-row.highlight {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--success);
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+            margin-top: 5px;
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 15px;
+        }
+        .flex-row > div {
+            flex: 1;
+        }
+
+        /* Tabs styling for CCTV Multiple Cameras */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background: var(--bg-elevated);
+            color: var(--text-secondary);
+        }
+        .action-btn {
+            background: transparent;
+            color: var(--danger);
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+        }
+        .action-btn:hover {
+            color: #fca5a5;
+        }
+
+        button.btn-primary {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        button.btn-primary:hover {
+            background: var(--accent-hover);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1><i class="fas fa-calculator"></i> Engineering System Calculators</h1>
+        <p style="color: var(--text-secondary);">Storage, Bandwidth, and Power estimation tools</p>
+    </div>
+
+    <div class="container">
+        <!-- STORAGE & BANDWIDTH CALCULATOR -->
+        <div class="panel">
+            <h2><i class="fas fa-hdd"></i> CCTV Storage & Bandwidth</h2>
+            
+            <div style="margin-bottom: 15px;">
+                <button class="btn-primary" onclick="addCameraRow()"><i class="fas fa-plus"></i> Add Camera Stream</button>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table id="cctv-table">
+                    <thead>
+                        <tr>
+                            <th>Qty</th>
+                            <th>Resolution</th>
+                            <th>FPS</th>
+                            <th>Encoding</th>
+                            <th>Complexity</th>
+                            <th>Act. %</th>
+                            <th>Days</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cctv-tbody">
+                        <!-- Rows injected here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="result-box">
+                <div class="result-row">
+                    <span>Total Cameras:</span>
+                    <span id="res-cam-count">0</span>
+                </div>
+                <div class="result-row">
+                    <span>Total Bandwidth:</span>
+                    <span id="res-bandwidth">0 Mbps</span>
+                </div>
+                <div class="result-row highlight">
+                    <span>Required Storage:</span>
+                    <span id="res-storage">0 TB</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- UPS CALCULATOR -->
+        <div class="panel">
+            <h2><i class="fas fa-battery-full"></i> UPS & Battery Sizing</h2>
+            
+            <div class="flex-row">
+                <div class="form-group">
+                    <label>Total Load Power (Watts)</label>
+                    <input type="number" id="ups-load" value="500" min="1" oninput="calculateUps()">
+                </div>
+                <div class="form-group">
+                    <label>Required Backup Time (Hours)</label>
+                    <input type="number" id="ups-hours" value="8" min="0.1" step="0.1" oninput="calculateUps()">
+                </div>
+            </div>
+
+            <div class="flex-row">
+                <div class="form-group">
+                    <label>System Voltage (V DC)</label>
+                    <select id="ups-voltage" onchange="calculateUps()">
+                        <option value="12">12V</option>
+                        <option value="24">24V</option>
+                        <option value="48" selected>48V</option>
+                        <option value="120">120V</option>
+                        <option value="240">240V</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Battery Type (DoD %)</label>
+                    <select id="ups-dod" onchange="calculateUps()">
+                        <option value="0.5">Lead Acid (50% DoD)</option>
+                        <option value="0.6">AGM / Gel (60% DoD)</option>
+                        <option value="0.8" selected>LiFePO4 (80% DoD)</option>
+                        <option value="0.9">Lithium-Ion (90% DoD)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex-row">
+                <div class="form-group">
+                    <label>Inverter Efficiency (%)</label>
+                    <input type="number" id="ups-efficiency" value="90" min="50" max="100" oninput="calculateUps()">
+                </div>
+                <div class="form-group">
+                    <label>Battery Aging Factor (%)</label>
+                    <input type="number" id="ups-aging" value="20" min="0" max="50" oninput="calculateUps()">
+                </div>
+            </div>
+
+            <div class="result-box">
+                <div class="result-row">
+                    <span>Total Energy Demand:</span>
+                    <span id="res-energy">0 Wh</span>
+                </div>
+                <div class="result-row">
+                    <span>Design Margin (DoD + Aging + Eff):</span>
+                    <span id="res-margin">0 x multiplier</span>
+                </div>
+                <div class="result-row highlight" style="color: var(--accent);">
+                    <span>Total Battery Bank Capacity:</span>
+                    <span id="res-capacity">0 Ah</span>
+                </div>
+                <div class="result-row" style="font-size: 0.9rem; margin-top: 10px; color: var(--text-secondary);">
+                    <span>Standard 100Ah Batteries required:</span>
+                    <span id="res-batt-count">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === CCTV Storage & Bandwidth Logic ===
+        
+        // Base bitrate references (Mbps) at 30 FPS, Medium Complexity
+        const baseBitrates = {
+            '720p': { 'MJPEG': 15, 'H264': 3, 'H265': 1.5, 'H265+': 0.8 },
+            '1080p': { 'MJPEG': 30, 'H264': 5, 'H265': 2.5, 'H265+': 1.2 },
+            '4MP': { 'MJPEG': 50, 'H264': 8, 'H265': 4, 'H265+': 2 },
+            '8MP': { 'MJPEG': 100, 'H264': 16, 'H265': 8, 'H265+': 4 },
+        };
+
+        const complexityMultipliers = {
+            'Low': 0.8,
+            'Medium': 1.0,
+            'High': 1.5
+        };
+
+        let rowIdCounter = 0;
+
+        function addCameraRow() {
+            const tbody = document.getElementById('cctv-tbody');
+            const rowId = 'row-' + rowIdCounter++;
+            
+            const tr = document.createElement('tr');
+            tr.id = rowId;
+            tr.innerHTML = `
+                <td><input type="number" value="1" min="1" style="width: 50px;" oninput="calculateCctv()" class="cam-qty"></td>
+                <td>
+                    <select onchange="calculateCctv()" class="cam-res">
+                        <option value="720p">720p (1MP)</option>
+                        <option value="1080p" selected>1080p (2MP)</option>
+                        <option value="4MP">4MP</option>
+                        <option value="8MP">4K (8MP)</option>
+                    </select>
+                </td>
+                <td><input type="number" value="30" min="1" max="60" style="width: 50px;" oninput="calculateCctv()" class="cam-fps"></td>
+                <td>
+                    <select onchange="calculateCctv()" class="cam-enc">
+                        <option value="H264">H.264</option>
+                        <option value="H265" selected>H.265</option>
+                        <option value="H265+">H.265+</option>
+                        <option value="MJPEG">MJPEG</option>
+                    </select>
+                </td>
+                <td>
+                    <select onchange="calculateCctv()" class="cam-comp">
+                        <option value="Low">Low</option>
+                        <option value="Medium" selected>Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                </td>
+                <td><input type="number" value="100" min="1" max="100" style="width: 60px;" oninput="calculateCctv()" class="cam-act"></td>
+                <td><input type="number" value="30" min="1" style="width: 60px;" oninput="calculateCctv()" class="cam-days"></td>
+                <td><button class="action-btn" onclick="removeCameraRow('${rowId}')"><i class="fas fa-trash"></i></button></td>
+            `;
+            tbody.appendChild(tr);
+            calculateCctv();
+        }
+
+        function removeCameraRow(id) {
+            document.getElementById(id).remove();
+            calculateCctv();
+        }
+
+        function calculateCctv() {
+            const tbody = document.getElementById('cctv-tbody');
+            let totalBandwidthMbps = 0;
+            let totalStorageTB = 0;
+            let totalCameras = 0;
+
+            Array.from(tbody.children).forEach(tr => {
+                const qty = parseInt(tr.querySelector('.cam-qty').value) || 1;
+                const res = tr.querySelector('.cam-res').value;
+                const fps = parseFloat(tr.querySelector('.cam-fps').value) || 30;
+                const enc = tr.querySelector('.cam-enc').value;
+                const comp = tr.querySelector('.cam-comp').value;
+                const act = (parseFloat(tr.querySelector('.cam-act').value) || 100) / 100;
+                const days = parseFloat(tr.querySelector('.cam-days').value) || 30;
+
+                const baseMbps = baseBitrates[res][enc];
+                const fpsMultiplier = fps / 30;
+                const compMultiplier = complexityMultipliers[comp];
+                
+                // Active recording bandwidth per camera
+                const activeMbps = baseMbps * fpsMultiplier * compMultiplier;
+                
+                // Average bandwidth per camera (factoring in activity %)
+                // Note: For smart encodings (H.265), idle bandwidth drops significantly. 
+                // We'll estimate idle bandwidth at 10% of active.
+                const idleMbps = activeMbps * 0.1;
+                const avgMbps = (activeMbps * act) + (idleMbps * (1 - act));
+                
+                const groupBandwidth = avgMbps * qty;
+                totalBandwidthMbps += groupBandwidth;
+
+                // Storage calculation: 
+                // Mbps to MB/s = / 8
+                // MB/s to GB/day = * 3600 * 24 / 1024
+                const bytesPerSec = (groupBandwidth * 1000 * 1000) / 8;
+                const bytesPerDay = bytesPerSec * 60 * 60 * 24;
+                const tbPerGroup = (bytesPerDay * days) / (1000 * 1000 * 1000 * 1000); // Base 10 storage (standard for HDD)
+                
+                totalStorageTB += tbPerGroup;
+                totalCameras += qty;
+            });
+
+            document.getElementById('res-cam-count').innerText = totalCameras;
+            document.getElementById('res-bandwidth').innerText = totalBandwidthMbps.toFixed(1) + ' Mbps';
+            document.getElementById('res-storage').innerText = totalStorageTB.toFixed(2) + ' TB';
+        }
+
+        // === UPS & Battery Logic ===
+        
+        function calculateUps() {
+            const loadW = parseFloat(document.getElementById('ups-load').value) || 0;
+            const hours = parseFloat(document.getElementById('ups-hours').value) || 0;
+            const voltage = parseFloat(document.getElementById('ups-voltage').value) || 48;
+            const dod = parseFloat(document.getElementById('ups-dod').value) || 0.8;
+            const eff = (parseFloat(document.getElementById('ups-efficiency').value) || 90) / 100;
+            const aging = (parseFloat(document.getElementById('ups-aging').value) || 20) / 100;
+
+            const totalEnergyWh = loadW * hours;
+            
+            // Required capacity = Energy / (Voltage * DoD * Eff * (1 - Aging))
+            const safetyMargin = 1 / (dod * eff * (1 - aging));
+            const reqCapacityAh = (totalEnergyWh / voltage) * safetyMargin;
+
+            document.getElementById('res-energy').innerText = totalEnergyWh.toFixed(0) + ' Wh';
+            document.getElementById('res-margin').innerText = safetyMargin.toFixed(2) + 'x';
+            document.getElementById('res-capacity').innerText = reqCapacityAh.toFixed(1) + ' Ah';
+            
+            const num100Ah = Math.ceil(reqCapacityAh / 100);
+            document.getElementById('res-batt-count').innerText = num100Ah + ' x (12V/24V/48V 100Ah blocks)';
+        }
+
+        // Initialize with one row
+        window.onload = () => {
+            addCameraRow();
+            calculateUps();
+        };
+    </script>
+</body>
+</html>
