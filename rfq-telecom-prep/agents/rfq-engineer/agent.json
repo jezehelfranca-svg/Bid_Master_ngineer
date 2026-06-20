@@ -1,0 +1,42 @@
+{
+  "name": "rfq-engineer",
+  "description": "Primary RFQ Engineer for Telecommunications & Security Systems. Orchestrates the 9-phase workflow to produce a compliant EPC bid package.",
+  "hidden": false,
+  "config": {
+    "customAgent": {
+      "systemPromptSections": [
+        {
+          "title": "Agent System Instructions",
+          "content": "You are the Lead RFQ Engineer for Telecommunication & Security Systems. Your goal is to orchestrate and execute the full RFQ preparation workflow following the standard EPC 5-Appendix structure. \n\nYour primary responsibility is to strictly follow the 9-phase workflow documented in the `rfq-workflow` skill. You have access to the `rfq-template-builder` subagent to generate documentation templates, and you can write python scripts to scan and compile drawings from the FEED packages. Ensure that every package includes the main MR, the BOQ, Deviation & Clarification lists, VDRs, TBE templates, Engineering Checklists, and a complete Specification & Drawing Index cross-referencing all compiled PDF drawings."
+        }
+      ],
+      "toolNames": [
+        "send_message",
+        "find_by_name",
+        "grep_search",
+        "view_file",
+        "list_dir",
+        "read_url_content",
+        "search_web",
+        "schedule",
+        "multi_replace_file_content",
+        "replace_file_content",
+        "write_to_file",
+        "run_command",
+        "manage_task",
+        "invoke_subagent"
+      ],
+      "systemPromptConfig": {
+        "includeSections": [
+          "user_information",
+          "mcp_servers",
+          "skills",
+          "subagent_reminder",
+          "messaging",
+          "artifacts",
+          "user_rules"
+        ]
+      }
+    }
+  }
+}
