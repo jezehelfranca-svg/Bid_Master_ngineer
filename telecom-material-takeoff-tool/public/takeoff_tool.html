@@ -900,19 +900,19 @@
 
 				<button class="btn btn-primary" onclick="saveProjectState()">
 					<i class="fa-solid fa-cloud-arrow-down"></i>
-					Save Project Session (JSON)
+					Save Project (JSON)
 				</button>
 
 				<div class="file-upload-wrapper" style="margin-top:8px;">
 					<button class="btn">
 						<i class="fa-solid fa-cloud-arrow-up"></i>
-						Load Project Session
+						Load Project
 					</button>
 					<input type="file" accept=".json" onchange="loadProjectState(event)">
 				</div>
 
 				<p style="font-size:0.75rem;color:var(--text-muted);margin-top:8px;line-height:1.3;">
-					Save/load all placed paths, markers, calibration and custom materials to resume work.
+					Save/load the drawing, DXF layers, calibration, placed takeoffs, custom materials and imported symbols.
 				</p>
 			</div>
 			
@@ -1382,6 +1382,8 @@
         let orthoEnabled = false; // Ortho mode toggle
         let rawMousePos = null; // Un-ortho, un-snapped raw coordinate position
         let customSvgSymbols = []; // { key, name, dataUrl } — user-imported SVG symbols
+        let currentDrawingSource = null; // Serialized source drawing for self-contained project saves
+        const PROJECT_STATE_VERSION = '2.0';
         let selectedTakeoffId = null; // ID of the selected takeoff item
         let isDraggingSymbol = false; // Dragging state for select mode
         let isRotatingSymbol = false; // Rotating state for select mode
@@ -1734,10 +1736,10 @@
             const btnToggleCoverage = document.getElementById('toggle-coverage');
             btnToggleCoverage.addEventListener('click', () => {
                 coverageVisible = !coverageVisible;
-                btnToggleCoverage.classList.toggle('toggle-on', coverageVisible);
-                btnToggleCoverage.classList.toggle('toggle-off', !coverageVisible);
+                updateCoverageToggleButton();
                 redrawFG();
             });
+            updateCoverageToggleButton();
 
 
             // Hook manual Calibration triggers
@@ -1769,12 +1771,411 @@
             restoreCustomSvgsFromStorage();
         });
 
+        function cloneProjectValue(value) {
+            if (value === undefined || value === null) return value;
+            return JSON.parse(JSON.stringify(value));
+        }
+
+        function arrayBufferToBase64(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            const chunkSize = 0x8000;
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+                const chunk = bytes.subarray(i, i + chunkSize);
+                let chunkString = '';
+                for (let j = 0; j < chunk.length; j++) {
+                    chunkString += String.fromCharCode(chunk[j]);
+                }
+                binary += chunkString;
+            }
+            return btoa(binary);
+        }
+
+        function base64ToUint8Array(base64) {
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes;
+        }
+
+        function rememberDrawingSource(source) {
+            currentDrawingSource = source ? cloneProjectValue(source) : null;
+        }
+
+        function formatBytes(bytes) {
+            if (!bytes || isNaN(bytes)) return '';
+            const mb = bytes / (1024 * 1024);
+            return `${mb.toFixed(2)} MB`;
+        }
+
+        function formatDrawingSourceLabel(source) {
+            if (!source) return 'No layout loaded';
+            const sizeText = source.size ? ` (${formatBytes(source.size)})` : '';
+            const suffix = source.embedded ? ' (Embedded Demo)' : sizeText;
+            return `${source.name || 'Restored drawing'}${suffix}`;
+        }
+
+        function showDrawingWorkspace(sourceLabel) {
+            if (sourceLabel) {
+                document.getElementById('file-info').innerText = sourceLabel;
+            }
+            emptyState.style.display = 'none';
+            canvasOuter.style.display = 'block';
+            helpBanner.style.display = 'flex';
+            updateToolbarInteractiveState();
+        }
+
+        function resetCadStateForNonCadDrawing() {
+            document.getElementById('cad-layers-section').style.display = 'none';
+            document.getElementById('cad-blocks-section').style.display = 'none';
+            dxfData = null;
+            dxfLayers = {};
+            dxfScaleInfo = { fitScale: 1, offsetX: 0, offsetY: 0, minX: 0, maxX: 0, minY: 0, maxY: 0 };
+            cadSnapPoints = [];
+            activeSnappedPoint = null;
+            cadBlocks = {};
+            isDarkTheme = false;
+            canvasOuter.style.backgroundColor = '#ffffff';
+        }
+
+        function getCanvasStateForSave() {
+            return {
+                width: canvasBg.width || 0,
+                height: canvasBg.height || 0,
+                originalPageWidth: originalPageWidth || 0
+            };
+        }
+
+        function applyCanvasState(canvasState) {
+            if (!canvasState) return;
+            const width = Number(canvasState.width);
+            const height = Number(canvasState.height);
+            if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return;
+
+            canvasBg.width = width;
+            canvasBg.height = height;
+            canvasFg.width = width;
+            canvasFg.height = height;
+            canvasOuter.style.width = `${width}px`;
+            canvasOuter.style.height = `${height}px`;
+            originalPageWidth = Number(canvasState.originalPageWidth) || width;
+        }
+
+        function loadImageDataUrlToCanvas(dataUrl) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = function() {
+                    canvasBg.width = img.width;
+                    canvasBg.height = img.height;
+                    canvasFg.width = img.width;
+                    canvasFg.height = img.height;
+
+                    canvasOuter.style.width = img.width + 'px';
+                    canvasOuter.style.height = img.height + 'px';
+                    originalPageWidth = img.width;
+
+                    ctxBg.clearRect(0, 0, img.width, img.height);
+                    ctxBg.drawImage(img, 0, 0);
+
+                    setZoom(1.0);
+                    setMode('pan');
+                    redrawFG();
+                    resolve();
+                };
+                img.onerror = () => reject(new Error('Unable to load saved image source.'));
+                img.src = dataUrl;
+            });
+        }
+
+        async function restoreProjectDrawingSource(state) {
+            const source = state.drawingSource || state.source || state.drawing;
+            const sourceContent = source?.content || source?.dataUrl;
+            if (!source || !sourceContent) return false;
+
+            const sourceType = source.type || source.kind;
+            const normalizedSource = {
+                ...source,
+                type: sourceType,
+                name: source.name || source.fileName || 'Restored drawing',
+                encoding: source.encoding || source.contentEncoding || (sourceType === 'image' ? 'dataUrl' : undefined),
+                content: sourceContent
+            };
+            showDrawingWorkspace(formatDrawingSourceLabel(normalizedSource));
+            rememberDrawingSource(normalizedSource);
+
+            if (sourceType === 'pdf') {
+                resetCadStateForNonCadDrawing();
+                pageNavigation.style.display = 'flex';
+                document.getElementById('ratio-img-warning').style.display = 'none';
+                const pdfBytes = normalizedSource.encoding === 'base64'
+                    ? base64ToUint8Array(sourceContent)
+                    : new Uint8Array(sourceContent);
+                pdfDoc = await pdfjsLib.getDocument(pdfBytes).promise;
+                const savedPage = Number(state.pageNum) || 1;
+                pageNum = Math.max(1, Math.min(savedPage, pdfDoc.numPages || 1));
+                await renderPDFPage(pageNum);
+                return true;
+            }
+
+            if (sourceType === 'image') {
+                resetCadStateForNonCadDrawing();
+                pageNavigation.style.display = 'none';
+                document.getElementById('ratio-img-warning').style.display = 'block';
+                pdfDoc = null;
+                await loadImageDataUrlToCanvas(sourceContent);
+                return true;
+            }
+
+            if (sourceType === 'dxf') {
+                pageNavigation.style.display = 'none';
+                document.getElementById('ratio-img-warning').style.display = 'none';
+                pdfDoc = null;
+                const parser = new DxfParser();
+                dxfData = parser.parseSync(sourceContent);
+                processDXFData();
+                return true;
+            }
+
+            throw new Error(`Unsupported saved drawing source type: ${sourceType}`);
+        }
+
+        function applyProjectCustomSvgSymbols(symbols) {
+            if (!Array.isArray(symbols)) return;
+            const byKey = new Map(customSvgSymbols.map(sym => [sym.key, sym]));
+            symbols.forEach(sym => {
+                if (!sym || !sym.key || !sym.dataUrl) return;
+                const cleanSym = {
+                    key: String(sym.key),
+                    name: String(sym.name || sym.key),
+                    dataUrl: String(sym.dataUrl)
+                };
+                byKey.set(cleanSym.key, cleanSym);
+                loadCustomSvgIntoCache(cleanSym.key, cleanSym.dataUrl);
+                addCustomSvgToDropdown(cleanSym.key, cleanSym.name);
+            });
+            customSvgSymbols = Array.from(byKey.values());
+            saveCustomSvgsToStorage();
+        }
+
+        function updateCoverageToggleButton() {
+            const btn = document.getElementById('toggle-coverage');
+            if (!btn) return;
+            btn.classList.toggle('toggle-on', coverageVisible);
+            btn.classList.toggle('toggle-off', !coverageVisible);
+            btn.setAttribute('tooltip', `Telecom Coverage Zones: ${coverageVisible ? 'ON' : 'OFF'}`);
+        }
+
+        function syncCalibrationControls() {
+            const unitSelect = document.getElementById('cal-ratio-unit');
+            if (unitSelect && calibration.unit) unitSelect.value = calibration.unit;
+            const modalUnitSelect = document.getElementById('cal-unit');
+            if (modalUnitSelect && calibration.unit) modalUnitSelect.value = calibration.unit;
+            const ratioInput = document.getElementById('cal-ratio-input');
+            if (ratioInput && calibration.ratio) ratioInput.value = calibration.ratio;
+        }
+
+        function applyProjectCadState(cadState, canvasState) {
+            if (!dxfData || !cadState) return;
+
+            if (cadState.scaleInfo) {
+                dxfScaleInfo = { ...dxfScaleInfo, ...cloneProjectValue(cadState.scaleInfo) };
+            }
+            if (typeof cadState.isDarkTheme === 'boolean') {
+                isDarkTheme = cadState.isDarkTheme;
+            }
+            if (canvasState) {
+                applyCanvasState(canvasState);
+            }
+            if (cadState.layers) {
+                Object.keys(cadState.layers).forEach(name => {
+                    if (!dxfLayers[name]) return;
+                    dxfLayers[name] = {
+                        ...dxfLayers[name],
+                        ...cloneProjectValue(cadState.layers[name]),
+                        visible: cadState.layers[name].visible !== false
+                    };
+                });
+            }
+
+            canvasOuter.style.backgroundColor = isDarkTheme ? '#0b0f19' : '#ffffff';
+            renderCADLayersUI();
+            renderCADBlocksUI();
+            drawDXFOnBackground();
+        }
+
+        function isValidProjectState(state) {
+            return !!state
+                && typeof state === 'object'
+                && !!state.calibration
+                && Array.isArray(state.materials)
+                && Array.isArray(state.takeoffs);
+        }
+
+        function getRestoredMode(state) {
+            const mode = state?.uiState?.currentMode;
+            return ['pan', 'select', 'point', 'path', 'delete'].includes(mode) ? mode : 'pan';
+        }
+
+        async function applyProjectState(state, drawingRestored) {
+            calibration = {
+                pixelsPerUnit: null,
+                realLength: null,
+                unit: 'm',
+                tempStart: null,
+                tempEnd: null,
+                ratio: null,
+                ...cloneProjectValue(state.calibration),
+                tempStart: null,
+                tempEnd: null
+            };
+
+            materials = cloneProjectValue(state.materials);
+            takeoffs = cloneProjectValue(state.takeoffs);
+            pageNum = Number(state.pageNum) || pageNum || 1;
+
+            applyProjectCustomSvgSymbols(state.customSvgSymbols);
+
+            if (state.activeMaterialId && materials.some(m => m.id === state.activeMaterialId)) {
+                activeMaterialId = state.activeMaterialId;
+            } else if (!materials.some(m => m.id === activeMaterialId)) {
+                activeMaterialId = null;
+            }
+
+            selectedTakeoffId = null;
+            activeDrawingPath = [];
+            tempMousePos = null;
+            rawMousePos = null;
+            activeSnappedPoint = null;
+            isDraggingSymbol = false;
+            isRotatingSymbol = false;
+
+            const cadState = state.cad || (
+                state.drawing && state.drawing.dxfLayers
+                    ? {
+                        layers: state.drawing.dxfLayers,
+                        scaleInfo: state.drawing.dxfScaleInfo,
+                        isDarkTheme: state.drawing.isDarkTheme
+                    }
+                    : null
+            );
+            if (cadState) {
+                applyProjectCadState(cadState, state.canvasState);
+            }
+
+            if (state.uiState) {
+                if (typeof state.uiState.snapEnabled === 'boolean') snapEnabled = state.uiState.snapEnabled;
+                if (typeof state.uiState.orthoEnabled === 'boolean') orthoEnabled = state.uiState.orthoEnabled;
+                if (typeof state.uiState.coverageVisible === 'boolean') coverageVisible = state.uiState.coverageVisible;
+                if (typeof state.uiState.sidebarCollapsed === 'boolean') setSidebarCollapsed(state.uiState.sidebarCollapsed);
+                if (typeof state.uiState.sidebarPinned === 'boolean') setSidebarPinned(state.uiState.sidebarPinned);
+                if (typeof state.uiState.bottomPanelCollapsed === 'boolean') {
+                    setBottomPanelCollapsed(state.uiState.bottomPanelCollapsed);
+                } else {
+                    setBottomPanelCollapsed(false);
+                }
+            } else {
+                setBottomPanelCollapsed(false);
+            }
+
+            syncCalibrationControls();
+            updateCalibrationUI();
+            updateSnapToggleButton();
+            updateOrthoToggleButton();
+            updateCoverageToggleButton();
+            recalculateTakeoffMeasurements();
+            renderMaterialsList();
+            renderTakeoffTable();
+            if (dxfData) {
+                renderCADLayersUI();
+                renderCADBlocksUI();
+                drawDXFOnBackground();
+            }
+
+            if (!drawingRestored && pdfDoc) {
+                await renderPDFPage(pageNum);
+            }
+
+            if (drawingRestored || isDrawingLoaded()) {
+                setMode(getRestoredMode(state));
+                if (state.uiState && Number.isFinite(Number(state.uiState.currentZoom))) {
+                    setZoom(Number(state.uiState.currentZoom));
+                }
+            } else {
+                redrawFG();
+            }
+
+            updateToolbarInteractiveState();
+        }
+
+        function buildProjectState() {
+            const savedCalibration = cloneProjectValue(calibration);
+            savedCalibration.tempStart = null;
+            savedCalibration.tempEnd = null;
+
+            return {
+                schema: 'telecom-mto-project',
+                version: PROJECT_STATE_VERSION,
+                savedAt: new Date().toISOString(),
+                drawingSource: currentDrawingSource ? cloneProjectValue(currentDrawingSource) : null,
+                canvasState: getCanvasStateForSave(),
+                calibration: savedCalibration,
+                materials: cloneProjectValue(materials),
+                takeoffs: cloneProjectValue(takeoffs),
+                customSvgSymbols: cloneProjectValue(customSvgSymbols),
+                activeMaterialId,
+                pageNum,
+                uiState: {
+                    currentMode,
+                    currentZoom,
+                    snapEnabled,
+                    orthoEnabled,
+                    coverageVisible,
+                    sidebarCollapsed,
+                    sidebarPinned,
+                    bottomPanelCollapsed
+                },
+                cad: dxfData ? {
+                    layers: cloneProjectValue(dxfLayers),
+                    scaleInfo: cloneProjectValue(dxfScaleInfo),
+                    isDarkTheme
+                } : null
+            };
+        }
+
+        function makeProjectDownloadName() {
+            const sourceName = currentDrawingSource?.name || 'takeoff_project';
+            const baseName = sourceName
+                .replace(/\.[^.]+$/, '')
+                .replace(/[^a-z0-9_-]+/gi, '_')
+                .replace(/^_+|_+$/g, '')
+                .slice(0, 60) || 'takeoff_project';
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            return `takeoff_project_${baseName}_${timestamp}.json`;
+        }
+
+        function downloadJson(filename, data) {
+            const blob = new Blob(
+                [JSON.stringify(data, null, 2)],
+                { type: 'application/json' }
+            );
+
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.download = filename;
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(url), 500);
+        }
+
         // --- EVENT HANDLERS: FILE MANAGEMENT ---
         function handleFileSelect(e) {
             const file = e.target.files[0];
             if (!file) return;
 
             document.getElementById('file-info').innerText = `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+            rememberDrawingSource(null);
             
             // Show workspace elements
             emptyState.style.display = 'none';
@@ -1793,13 +2194,14 @@
             isDarkTheme = false;
             canvasOuter.style.backgroundColor = '#ffffff';
 
-            if (file.type === 'application/pdf') {
+            const lowerName = file.name.toLowerCase();
+            if (file.type === 'application/pdf' || lowerName.endsWith('.pdf')) {
                 document.getElementById('ratio-img-warning').style.display = 'none';
                 loadPDFFile(file);
             } else if (file.type.startsWith('image/')) {
                 document.getElementById('ratio-img-warning').style.display = 'block';
                 loadImageFile(file);
-            } else if (file.name.toLowerCase().endsWith('.dxf')) {
+            } else if (lowerName.endsWith('.dxf')) {
                 document.getElementById('ratio-img-warning').style.display = 'none';
                 loadDXFFile(file);
             } else {
@@ -1811,23 +2213,38 @@
             pageNavigation.style.display = 'flex';
             const reader = new FileReader();
             reader.onload = function(e) {
-                const typedarray = new Uint8Array(e.target.result);
+                const buffer = e.target.result;
+                rememberDrawingSource({
+                    type: 'pdf',
+                    name: file.name,
+                    mimeType: file.type || 'application/pdf',
+                    size: file.size,
+                    lastModified: file.lastModified,
+                    encoding: 'base64',
+                    content: arrayBufferToBase64(buffer)
+                });
+
+                const typedarray = new Uint8Array(buffer);
                 pdfjsLib.getDocument(typedarray).promise.then(pdf => {
                     pdfDoc = pdf;
                     pageNum = 1;
                     renderPDFPage(pageNum);
+                }).catch(err => {
+                    console.error("PDF load error:", err);
+                    alert("Error loading PDF file. Please ensure it is a valid PDF drawing.");
                 });
             };
             reader.readAsArrayBuffer(file);
         }
 
         function renderPDFPage(num) {
-            if (!pdfDoc) return;
-            document.getElementById('page-num-display').innerText = `Page ${num} of ${pdfDoc.numPages}`;
-            document.getElementById('prev-page').disabled = num <= 1;
-            document.getElementById('next-page').disabled = num >= pdfDoc.numPages;
+            if (!pdfDoc) return Promise.resolve();
+            pageNum = Math.min(Math.max(parseInt(num, 10) || 1, 1), pdfDoc.numPages);
+            document.getElementById('page-num-display').innerText = `Page ${pageNum} of ${pdfDoc.numPages}`;
+            document.getElementById('prev-page').disabled = pageNum <= 1;
+            document.getElementById('next-page').disabled = pageNum >= pdfDoc.numPages;
 
-            pdfDoc.getPage(num).then(page => {
+            return pdfDoc.getPage(pageNum).then(page => {
                 const viewport = page.getViewport({ scale: 2.0 }); // High-DPI render
                 
                 canvasBg.width = viewport.width;
@@ -1844,7 +2261,7 @@
                     canvasContext: ctxBg,
                     viewport: viewport
                 };
-                page.render(renderContext).promise.then(() => {
+                return page.render(renderContext).promise.then(() => {
                     setZoom(1.0);
                     setMode('pan');
                     redrawFG();
@@ -1867,28 +2284,23 @@
         function loadImageFile(file) {
             pageNavigation.style.display = 'none';
             pdfDoc = null;
-            
             const reader = new FileReader();
             reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    canvasBg.width = img.width;
-                    canvasBg.height = img.height;
-                    canvasFg.width = img.width;
-                    canvasFg.height = img.height;
-                    
-                    canvasOuter.style.width = img.width + 'px';
-                    canvasOuter.style.height = img.height + 'px';
-                    originalPageWidth = img.width;
+                const dataUrl = e.target.result;
+                rememberDrawingSource({
+                    type: 'image',
+                    name: file.name,
+                    mimeType: file.type || 'image/*',
+                    size: file.size,
+                    lastModified: file.lastModified,
+                    encoding: 'dataUrl',
+                    content: dataUrl
+                });
 
-                    ctxBg.clearRect(0, 0, img.width, img.height);
-                    ctxBg.drawImage(img, 0, 0);
-                    
-                    setZoom(1.0);
-                    setMode('pan');
-                    redrawFG();
-                };
-                img.src = e.target.result;
+                loadImageDataUrlToCanvas(dataUrl).catch(err => {
+                    console.error("Image load error:", err);
+                    alert("Error loading image file. Please ensure it is a valid drawing image.");
+                });
             };
             reader.readAsDataURL(file);
         }
@@ -1897,7 +2309,6 @@
         function loadDXFFile(file) {
             pageNavigation.style.display = 'none';
             pdfDoc = null;
-            
             const reader = new FileReader();
             reader.onload = function(e) {
                 const text = e.target.result;
@@ -1905,7 +2316,15 @@
                     const parser = new DxfParser();
                     dxfData = parser.parseSync(text);
                     console.log("Parsed DXF:", dxfData);
-                    
+                    rememberDrawingSource({
+                        type: 'dxf',
+                        name: file.name,
+                        mimeType: file.type || 'application/dxf',
+                        size: file.size,
+                        lastModified: file.lastModified,
+                        encoding: 'text',
+                        content: text
+                    });
                     processDXFData();
                 } catch (err) {
                     console.error("DXF parse error:", err);
@@ -1915,7 +2334,15 @@
             reader.readAsText(file);
         }
 
-        function processDXFData() {
+        function applyDxfLayerVisibility(layerState) {
+            if (!layerState) return;
+            Object.keys(layerState).forEach(name => {
+                if (!dxfLayers[name]) return;
+                dxfLayers[name].visible = layerState[name].visible !== false;
+            });
+        }
+
+        function processDXFData(options = {}) {
             if (!dxfData) return;
             
             // 1. Compile Layers list
@@ -1943,7 +2370,6 @@
                     }
                 });
             }
-
             // 2. Compute Bounding Box and compile Object Snap points database
             let minX = Infinity, maxX = -Infinity;
             let minY = Infinity, maxY = -Infinity;
@@ -2056,11 +2482,13 @@
             const estimatedUnit = width > 500 ? 'm' : 'ft';
             const defaultRatio = width > 500 ? 1000 : 1; 
             
-            calibration.unit = estimatedUnit;
-            calibration.pixelsPerUnit = fitScale * defaultRatio;
-            calibration.ratio = defaultRatio;
+            if (options.applyDefaultCalibration !== false) {
+                calibration.unit = estimatedUnit;
+                calibration.pixelsPerUnit = fitScale * defaultRatio;
+                calibration.ratio = defaultRatio;
 
-            updateCalibrationUI();
+                updateCalibrationUI();
+            }
 
             // Display panels
             document.getElementById('cad-layers-section').style.display = 'block';
@@ -2587,23 +3015,28 @@ ENDSEC
   0
 EOF`;
 
-            document.getElementById('file-info').innerText = `Sample_CAD_Blueprint.dxf (Embedded Demo)`;
-            
-            // Show workspace elements
-            emptyState.style.display = 'none';
-            canvasOuter.style.display = 'block';
-            helpBanner.style.display = 'flex';
-            setBottomPanelCollapsed(false);
-            updateToolbarInteractiveState();
+            const sampleSource = {
+                type: 'dxf',
+                name: 'Sample_CAD_Blueprint.dxf',
+                mimeType: 'application/dxf',
+                size: dxfText.length,
+                encoding: 'text',
+                content: dxfText,
+                embedded: true
+            };
 
-            // Clean PDF and Image states
+            showDrawingWorkspace(formatDrawingSourceLabel(sampleSource));
+            document.getElementById('ratio-img-warning').style.display = 'none';
+            pageNavigation.style.display = 'none';
             pdfDoc = null;
+            setBottomPanelCollapsed(false);
             takeoffs = [];
 
             try {
                 const parser = new DxfParser();
                 dxfData = parser.parseSync(dxfText);
                 console.log("Parsed DXF:", dxfData);
+                rememberDrawingSource(sampleSource);
                 processDXFData();
             } catch (err) {
                 console.error("DXF parse error:", err);
@@ -3309,23 +3742,15 @@ EOF`;
 		}
 
 		function saveProjectState() {
-			const state = {
-				version: "1.0",
-				calibration: { ...calibration },
-				materials: materials.map(m => ({ ...m })),
-				takeoffs: takeoffs.map(t => ({ ...t })),
-				pageNum: pageNum
-			};
-
-			const blob = new Blob(
-				[JSON.stringify(state, null, 2)],
-				{ type: "application/json" }
-			);
-
-			const link = document.createElement("a");
-			link.href = URL.createObjectURL(blob);
-			link.download = `takeoff_project_${Date.now()}.json`;
-			link.click();
+			try {
+				downloadJson(makeProjectDownloadName(), buildProjectState());
+				helpBannerText.innerText = currentDrawingSource
+					? 'Project session saved with the source drawing embedded.'
+					: 'Project session saved. No source drawing is embedded yet.';
+			} catch (err) {
+				console.error(err);
+				alert('Error saving project session: ' + err.message);
+			}
 		}
 
 		function loadProjectState(event) {
@@ -3333,43 +3758,29 @@ EOF`;
 			if (!file) return;
 
 			const reader = new FileReader();
-			reader.onload = function(e) {
+			reader.onload = async function(e) {
 				try {
 					const state = JSON.parse(e.target.result);
-					if (state.calibration && state.materials && state.takeoffs) {
-						calibration = state.calibration;
-						
-						updateCalibrationUI();
-						if (calibration.pixelsPerUnit) {
-							const unitSelect = document.getElementById('cal-ratio-unit');
-							if (unitSelect) unitSelect.value = calibration.unit;
-							const modalUnitSelect = document.getElementById('cal-unit');
-							if (modalUnitSelect) modalUnitSelect.value = calibration.unit;
-						}
-
-						materials = state.materials;
-						takeoffs = state.takeoffs;
-						if (state.pageNum !== undefined) {
-							pageNum = state.pageNum;
-							if (pdfDoc) renderPDFPage(pageNum);
-						}
-
-						recalculateTakeoffMeasurements();
-						renderMaterialsList();
-						renderTakeoffTable();
-						redrawFG();
-						setBottomPanelCollapsed(false);
-						alert('Project session successfully loaded!');
-					} else {
+					if (!isValidProjectState(state)) {
 						alert('Invalid project file format. Missing core session data.');
+						return;
 					}
+
+					const drawingRestored = await restoreProjectDrawingSource(state);
+					await applyProjectState(state, drawingRestored);
+
+					const messageSuffix = drawingRestored
+						? ''
+						: '\n\nNote: This legacy project file does not include an embedded drawing source. Load the original plan separately if the background is missing.';
+					alert(`Project session successfully loaded!${messageSuffix}`);
 				} catch (err) {
 					console.error(err);
 					alert('Error parsing JSON project file.');
+				} finally {
+					event.target.value = '';
 				}
 			};
 			reader.readAsText(file);
-			event.target.value = '';
 		}
 
 		function exportMarkedUpDrawing(format) {
