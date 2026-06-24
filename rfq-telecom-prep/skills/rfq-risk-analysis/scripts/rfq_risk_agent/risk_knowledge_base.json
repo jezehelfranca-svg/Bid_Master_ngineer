@@ -1,0 +1,542 @@
+{
+  "version": "1.0",
+  "description": "Risk Knowledge Base for Telecom & Security System RFQ Bid Analysis. Encodes risk rules across 6 dimensions derived from engineering checklists, SAES standards, TBE criteria, and industry best practices.",
+  "risk_dimensions": {
+    "D1_STANDARDS_COMPLIANCE": {
+      "name": "Standards Compliance",
+      "description": "Risks arising from missing, outdated, or non-compliant references to Saudi Aramco (SAES/SAMSS), international (IEC/IEEE), and security (SAIS) standards.",
+      "rules": [
+        {
+          "rule_id": "D1-001",
+          "check": "SAES standard referenced in spec but marked HOLD/Missing in MR",
+          "trigger_keywords": ["SAES-T-", "SAES-O-", "SAES-P-", "SAES-Z-"],
+          "trigger_condition": "Standard appears in spec but project MR lists it as HOLD or Missing",
+          "default_probability": 4,
+          "default_impact": 5,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Obtain latest revision of the standard from Saudi Aramco or request formal waiver via SAEP-302."
+        },
+        {
+          "rule_id": "D1-002",
+          "check": "CCTV specification missing SAES-T-555 reference",
+          "trigger_keywords": ["CCTV", "video surveillance", "camera"],
+          "trigger_condition": "Spec covers CCTV/video surveillance but does not reference SAES-T-555",
+          "default_probability": 3,
+          "default_impact": 4,
+          "applicable_subsystems": ["CCTV"],
+          "mitigation": "Add SAES-T-555 (Video Surveillance Systems) to reference list and verify compliance."
+        },
+        {
+          "rule_id": "D1-003",
+          "check": "PAGA specification missing SAES-T-481 reference",
+          "trigger_keywords": ["PAGA", "paging", "IPVP", "loudspeaker", "voice paging"],
+          "trigger_condition": "Spec covers PAGA/voice paging but does not reference SAES-T-481",
+          "default_probability": 3,
+          "default_impact": 4,
+          "applicable_subsystems": ["PAGA"],
+          "mitigation": "Add SAES-T-481 (In-Plant Voice Paging System) to reference list and verify compliance."
+        },
+        {
+          "rule_id": "D1-004",
+          "check": "Radio specification missing SAES-T-493 reference",
+          "trigger_keywords": ["radio", "PMR", "TETRA", "LTE", "mobile"],
+          "trigger_condition": "Spec covers radio systems but does not reference SAES-T-493",
+          "default_probability": 3,
+          "default_impact": 4,
+          "applicable_subsystems": ["RADIO"],
+          "mitigation": "Add SAES-T-493 (Mobile and Fixed Radio Systems) to reference list."
+        },
+        {
+          "rule_id": "D1-005",
+          "check": "Security specification missing SAES-O-205 reference",
+          "trigger_keywords": ["security", "access control", "ACS", "SACS", "intrusion"],
+          "trigger_condition": "Spec covers security systems but does not reference SAES-O-205",
+          "default_probability": 3,
+          "default_impact": 5,
+          "applicable_subsystems": ["ACS", "PIDS", "SECURITY"],
+          "mitigation": "Add SAES-O-205 (Security Systems for Industrial Facilities) to reference list."
+        },
+        {
+          "rule_id": "D1-006",
+          "check": "OSP cabling missing SAES-T-911 or SAES-T-928 reference",
+          "trigger_keywords": ["outside plant", "OSP", "buried", "underground", "conduit", "trench"],
+          "trigger_condition": "Spec covers outside plant cabling but does not reference SAES-T-911 or SAES-T-928",
+          "default_probability": 3,
+          "default_impact": 3,
+          "applicable_subsystems": ["CABLING", "FIBER"],
+          "mitigation": "Add SAES-T-911 (Conduit System Design) and SAES-T-928 (OSP Buried Plant) to reference list."
+        },
+        {
+          "rule_id": "D1-007",
+          "check": "International standard referenced without edition year",
+          "trigger_keywords": ["IEC", "IEEE", "NFPA", "ANSI"],
+          "trigger_condition": "International standard reference lacks edition or year identifier",
+          "default_probability": 2,
+          "default_impact": 3,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Clarify applicable edition year for each international standard reference."
+        },
+        {
+          "rule_id": "D1-008",
+          "check": "SAIS security directive not referenced for security scope",
+          "trigger_keywords": ["security", "SAIS", "SEC-01", "SEC-05", "SEC-07", "SEC-09"],
+          "trigger_condition": "Security spec does not reference applicable SAIS directives (SEC-01, SEC-05, SEC-07, SEC-09)",
+          "default_probability": 3,
+          "default_impact": 4,
+          "applicable_subsystems": ["SECURITY", "ACS", "CCTV"],
+          "mitigation": "Verify and add all applicable SAIS directives to the reference section."
+        },
+        {
+          "rule_id": "D1-009",
+          "check": "Grounding standard SAES-T-795 not referenced",
+          "trigger_keywords": ["grounding", "bonding", "earthing", "ground"],
+          "trigger_condition": "Spec mentions grounding/bonding but does not reference SAES-T-795",
+          "default_probability": 2,
+          "default_impact": 3,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Add SAES-T-795 (Grounding, Bonding and Electrical Protection) to reference list."
+        },
+        {
+          "rule_id": "D1-010",
+          "check": "Fiber optic cabling missing SAES-T-624 reference",
+          "trigger_keywords": ["fiber optic", "FOC", "fibre", "single-mode", "multi-mode"],
+          "trigger_condition": "Spec covers fiber optic cabling but does not reference SAES-T-624",
+          "default_probability": 2,
+          "default_impact": 3,
+          "applicable_subsystems": ["FIBER", "CABLING"],
+          "mitigation": "Add SAES-T-624 (Fiber Optic Cables for OSP and Inter/Intra Building) to reference list."
+        }
+      ]
+    },
+    "D2_SCOPE_COMPLETENESS": {
+      "name": "Scope Completeness",
+      "description": "Risks from missing subsystems, locations, equipment categories, or scope boundaries that leave gaps in the bid package.",
+      "rules": [
+        {
+          "rule_id": "D2-001",
+          "check": "Missing subsystem in specification scope",
+          "trigger_keywords": [],
+          "trigger_condition": "A subsystem expected per MR (e.g., PIDS, ACS, CCTV, IT-ACS) is not covered in the specification",
+          "default_probability": 3,
+          "default_impact": 5,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Identify missing subsystem and request supplementary specification from client or issue RFI."
+        },
+        {
+          "rule_id": "D2-002",
+          "check": "Scope location not covered for all buildings",
+          "trigger_keywords": ["PIB-080", "PIB-081", "SS-070", "SS-071", "SS-072", "CCR", "CCB"],
+          "trigger_condition": "Building/area mentioned in project scope but no equipment or system assigned to it in the spec",
+          "default_probability": 3,
+          "default_impact": 4,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Cross-reference all scope locations against system block diagrams and confirm coverage."
+        },
+        {
+          "rule_id": "D2-003",
+          "check": "Hazardous area scope gap — no ATEX/IECEx requirement stated",
+          "trigger_keywords": ["Zone 1", "Zone 2", "hazardous", "classified area", "explosion", "Ex d", "Ex ia", "ATEX", "IECEx"],
+          "trigger_condition": "Equipment is installed in classified areas but spec does not state ATEX/IECEx certification requirement",
+          "default_probability": 3,
+          "default_impact": 5,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Add explicit ATEX/IECEx certification requirements for all equipment in classified areas."
+        },
+        {
+          "rule_id": "D2-004",
+          "check": "Battery/UPS backup duration not specified",
+          "trigger_keywords": ["UPS", "battery", "backup", "uninterruptible"],
+          "trigger_condition": "Active equipment mentioned but no battery backup duration specified",
+          "default_probability": 3,
+          "default_impact": 4,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Specify battery backup duration per MR requirements (30/60 min telecom, 4-8 hrs PAGA, 2 hrs SACS)."
+        },
+        {
+          "rule_id": "D2-005",
+          "check": "Spare parts scope undefined",
+          "trigger_keywords": ["spare", "commissioning spares", "operational spares"],
+          "trigger_condition": "Spec mentions equipment supply but does not define spare parts requirements (commissioning + 2-year operational)",
+          "default_probability": 2,
+          "default_impact": 3,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Add spare parts section specifying commissioning spares (base) and 2-year operational spares (option)."
+        },
+        {
+          "rule_id": "D2-006",
+          "check": "Special tools not specified",
+          "trigger_keywords": ["special tools", "test equipment", "maintenance tools"],
+          "trigger_condition": "No special tools requirement listed for system maintenance and installation",
+          "default_probability": 2,
+          "default_impact": 2,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Include special tools in vendor scope of supply."
+        },
+        {
+          "rule_id": "D2-007",
+          "check": "Anti-drone or perimeter extension scope ambiguity",
+          "trigger_keywords": ["anti-drone", "perimeter", "fence", "relocat"],
+          "trigger_condition": "Spec mentions anti-drone or perimeter scope changes without clear boundary definition",
+          "default_probability": 4,
+          "default_impact": 4,
+          "applicable_subsystems": ["PIDS", "SECURITY"],
+          "mitigation": "Clarify exact perimeter length, fence type, and relocation scope with client."
+        },
+        {
+          "rule_id": "D2-008",
+          "check": "Contractor vs Vendor scope boundary unclear",
+          "trigger_keywords": ["CONTRACTOR", "VENDOR", "scope", "responsibility"],
+          "trigger_condition": "Spec uses both CONTRACTOR and VENDOR without clear delineation of responsibilities",
+          "default_probability": 3,
+          "default_impact": 4,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Map scope boundaries to Scope of Supply Checklist (Appendix 1) and clarify in deviation list."
+        }
+      ]
+    },
+    "D3_TECHNICAL_ADEQUACY": {
+      "name": "Technical Adequacy",
+      "description": "Risks from insufficient, missing, or non-compliant technical parameters that affect system design and performance.",
+      "rules": [
+        {
+          "rule_id": "D3-001",
+          "check": "CCTV resolution not specified or below minimum",
+          "trigger_keywords": ["resolution", "1080p", "megapixel", "MP", "4K", "HD"],
+          "trigger_condition": "CCTV spec does not state camera resolution or states below 1080p minimum",
+          "default_probability": 2,
+          "default_impact": 4,
+          "applicable_subsystems": ["CCTV"],
+          "mitigation": "Specify minimum 1080p (Full HD) H.264/H.265 IP-based cameras per SAES-T-555."
+        },
+        {
+          "rule_id": "D3-002",
+          "check": "NVR storage calculation missing or insufficient",
+          "trigger_keywords": ["storage", "NVR", "recording", "RAID", "days", "retention"],
+          "trigger_condition": "CCTV spec does not specify storage days, RAID level, or retention period",
+          "default_probability": 3,
+          "default_impact": 4,
+          "applicable_subsystems": ["CCTV"],
+          "mitigation": "Specify minimum 30-day continuous recording with RAID 6 redundancy at 15 IPS."
+        },
+        {
+          "rule_id": "D3-003",
+          "check": "Redundancy not specified for critical equipment",
+          "trigger_keywords": ["redundan", "N+1", "1+1", "hot-standby", "hot standby", "failover", "backup"],
+          "trigger_condition": "Core equipment (controllers, servers, switches) mentioned without redundancy specification",
+          "default_probability": 3,
+          "default_impact": 5,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Specify 1+1 hot-standby for core processors/controllers and N+1 for amplifiers per MR defaults."
+        },
+        {
+          "rule_id": "D3-004",
+          "check": "IP rating below outdoor minimum",
+          "trigger_keywords": ["IP31", "IP44", "IP54", "IP55", "IP65", "IP66", "IP67", "ingress protection"],
+          "trigger_condition": "Outdoor equipment specified with IP rating below IP65",
+          "default_probability": 2,
+          "default_impact": 3,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Specify minimum IP65 for outdoor plant areas, IP66 for coastal/corrosive environments."
+        },
+        {
+          "rule_id": "D3-005",
+          "check": "ACS RFID frequency not specified or non-standard",
+          "trigger_keywords": ["RFID", "card reader", "proximity", "13.56", "125 kHz", "Mifare", "DESFire"],
+          "trigger_condition": "ACS card readers specified without confirming 13.56 MHz RFID standard",
+          "default_probability": 3,
+          "default_impact": 4,
+          "applicable_subsystems": ["ACS"],
+          "mitigation": "Specify 13.56 MHz RFID protocol (ISO/IEC 18000-3 or Mifare/DESFire) per SAES-O-205."
+        },
+        {
+          "rule_id": "D3-006",
+          "check": "Cable distance exceeds Cat 6 limit",
+          "trigger_keywords": ["Cat 6", "CAT6", "UTP", "horizontal cable", "90m", "100m"],
+          "trigger_condition": "Cat 6 horizontal cabling runs indicated beyond 90m patch panel to outlet limit",
+          "default_probability": 2,
+          "default_impact": 3,
+          "applicable_subsystems": ["CABLING", "DATA_NETWORK"],
+          "mitigation": "Add intermediate telecom closets or switch to fiber optic for runs exceeding 90m."
+        },
+        {
+          "rule_id": "D3-007",
+          "check": "Fire alarm integration missing for ACS",
+          "trigger_keywords": ["fire alarm", "FACP", "fail-safe", "emergency release", "break glass", "fire detection"],
+          "trigger_condition": "ACS electric locks mentioned but no fire alarm integration (fail-safe release) specified",
+          "default_probability": 4,
+          "default_impact": 5,
+          "applicable_subsystems": ["ACS", "SECURITY"],
+          "mitigation": "Specify fail-safe electric lock release upon fire alarm signal from FACP per life safety codes."
+        },
+        {
+          "rule_id": "D3-008",
+          "check": "No coverage study referenced for area-based system",
+          "trigger_keywords": ["coverage", "acoustic study", "RF study", "FOV", "heat map", "coverage map"],
+          "trigger_condition": "Area-based system (PAGA/CCTV/WiFi/Radio) specified without reference to coverage study or map",
+          "default_probability": 3,
+          "default_impact": 4,
+          "applicable_subsystems": ["PAGA", "CCTV", "WIFI", "RADIO"],
+          "mitigation": "Require coverage studies (acoustic for PAGA, FOV for CCTV, RF heat map for WiFi/Radio) as deliverables."
+        },
+        {
+          "rule_id": "D3-009",
+          "check": "LDC autonomous operation not specified for ACS",
+          "trigger_keywords": ["local door controller", "LDC", "autonomous", "offline", "standalone"],
+          "trigger_condition": "ACS system described but local controllers not specified to operate autonomously when disconnected from server",
+          "default_probability": 3,
+          "default_impact": 4,
+          "applicable_subsystems": ["ACS"],
+          "mitigation": "Specify that LDCs must store card database and events locally for autonomous operation during network failure."
+        },
+        {
+          "rule_id": "D3-010",
+          "check": "CCTV camera washing system not specified for process areas",
+          "trigger_keywords": ["washing", "wiper", "cleaning", "pressure wash"],
+          "trigger_condition": "PTZ process cameras specified for dusty/sandy environments without washing system requirement",
+          "default_probability": 2,
+          "default_impact": 3,
+          "applicable_subsystems": ["CCTV"],
+          "mitigation": "Specify pressure washing system (tank, pump, wiper) for all PTZ process cameras in outdoor areas."
+        },
+        {
+          "rule_id": "D3-011",
+          "check": "EPOB/muster station integration not specified",
+          "trigger_keywords": ["EPOB", "muster", "roll call", "personnel on board", "assembly point"],
+          "trigger_condition": "ACS system specified without Electronic Personnel On Board (EPOB) functionality at muster stations",
+          "default_probability": 2,
+          "default_impact": 3,
+          "applicable_subsystems": ["ACS", "SECURITY"],
+          "mitigation": "Specify EPOB muster station readers at assembly points with real-time roll call capability."
+        },
+        {
+          "rule_id": "D3-012",
+          "check": "Network cybersecurity not addressed",
+          "trigger_keywords": ["cybersecurity", "firewall", "IPS", "DMZ", "encryption", "SSL", "TLS"],
+          "trigger_condition": "Network/data system specified but no cybersecurity measures (firewall, IPS, DMZ, encryption) defined",
+          "default_probability": 3,
+          "default_impact": 4,
+          "applicable_subsystems": ["DATA_NETWORK", "SECURITY"],
+          "mitigation": "Specify firewall, IPS/IDPS, network segmentation (DMZ), and encryption per SAES-T-566."
+        }
+      ]
+    },
+    "D4_DOCUMENTATION_GAPS": {
+      "name": "Documentation Gaps",
+      "description": "Risks from missing, incomplete, or unavailable drawings, studies, calculations, and vendor deliverables.",
+      "rules": [
+        {
+          "rule_id": "D4-001",
+          "check": "Drawing referenced in spec but marked HOLD/Missing in MR",
+          "trigger_keywords": [],
+          "trigger_condition": "Drawing number appears in specification but is listed as HOLD/Missing in the MR drawing register",
+          "default_probability": 4,
+          "default_impact": 5,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Obtain missing drawing from FEED contractor or flag as bid assumption with cost contingency."
+        },
+        {
+          "rule_id": "D4-002",
+          "check": "No block diagram provided for subsystem",
+          "trigger_keywords": ["block diagram", "system diagram", "architecture diagram"],
+          "trigger_condition": "Subsystem described in spec but no system/block diagram referenced or available",
+          "default_probability": 3,
+          "default_impact": 4,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Request system block diagram from FEED contractor or develop one as part of vendor design scope."
+        },
+        {
+          "rule_id": "D4-003",
+          "check": "FAT/SAT procedure not defined",
+          "trigger_keywords": ["FAT", "SAT", "factory acceptance", "site acceptance", "test procedure"],
+          "trigger_condition": "Testing/commissioning section exists but no FAT/SAT procedure or criteria defined",
+          "default_probability": 2,
+          "default_impact": 3,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Include FAT/SAT procedure template in VDR requirements; define acceptance criteria."
+        },
+        {
+          "rule_id": "D4-004",
+          "check": "Design basis document not referenced",
+          "trigger_keywords": ["design basis", "basis of design", "design criteria"],
+          "trigger_condition": "Spec does not reference a telecom design basis document",
+          "default_probability": 2,
+          "default_impact": 3,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Request project telecom design basis document or develop assumptions list."
+        },
+        {
+          "rule_id": "D4-005",
+          "check": "Electrical load calculation not provided",
+          "trigger_keywords": ["electrical load", "power consumption", "heat dissipation", "watt", "VA"],
+          "trigger_condition": "Active equipment specified but no electrical load calculation document referenced",
+          "default_probability": 2,
+          "default_impact": 3,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Request or develop electrical load calculation including UPS sizing."
+        },
+        {
+          "rule_id": "D4-006",
+          "check": "Bandwidth/storage calculation not provided for CCTV",
+          "trigger_keywords": ["bandwidth", "storage calculation", "disk space"],
+          "trigger_condition": "CCTV system specified but no bandwidth or storage sizing calculation referenced",
+          "default_probability": 3,
+          "default_impact": 4,
+          "applicable_subsystems": ["CCTV", "SECURITY"],
+          "mitigation": "Develop bandwidth and storage calculation based on camera count, resolution, frame rate, and retention period."
+        },
+        {
+          "rule_id": "D4-007",
+          "check": "Cable schedule or MTO not referenced",
+          "trigger_keywords": ["cable schedule", "cable list", "MTO", "material takeoff", "bill of cable"],
+          "trigger_condition": "Cabling scope described but no cable schedule, routing, or MTO document referenced",
+          "default_probability": 2,
+          "default_impact": 3,
+          "applicable_subsystems": ["CABLING"],
+          "mitigation": "Develop cable MTO with 10% waste factor and 3m/5m slack allowances per MR defaults."
+        }
+      ]
+    },
+    "D5_INTERFACE_COORDINATION": {
+      "name": "Interface Coordination",
+      "description": "Risks from undefined or unclear interfaces between telecom/security systems and other disciplines (civil, electrical, HVAC, piping, fire safety).",
+      "rules": [
+        {
+          "rule_id": "D5-001",
+          "check": "Civil/structural interface missing for towers or poles",
+          "trigger_keywords": ["tower", "pole", "mast", "foundation", "civil", "structural", "concrete pad"],
+          "trigger_condition": "Equipment towers/poles specified but no civil foundation design interface defined",
+          "default_probability": 3,
+          "default_impact": 4,
+          "applicable_subsystems": ["CCTV", "RADIO", "PAGA"],
+          "mitigation": "Transmit tower/pole weight, dimensions, and wind load to civil team for foundation design."
+        },
+        {
+          "rule_id": "D5-002",
+          "check": "Electrical interface undefined for cabinet power",
+          "trigger_keywords": ["power supply", "UPS", "electrical", "feeder", "power source", "AC supply"],
+          "trigger_condition": "Active cabinets specified but no electrical power interface (UPS feeder, voltage, circuit breaker) defined",
+          "default_probability": 3,
+          "default_impact": 4,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Define electrical load per cabinet and transmit to electrical discipline for UPS distribution board sizing."
+        },
+        {
+          "rule_id": "D5-003",
+          "check": "HVAC heat dissipation data not transmitted",
+          "trigger_keywords": ["heat dissipation", "cooling", "HVAC", "air conditioning", "BTU"],
+          "trigger_condition": "Active equipment in enclosed rooms but no heat dissipation data specified for HVAC sizing",
+          "default_probability": 2,
+          "default_impact": 3,
+          "applicable_subsystems": ["DATA_NETWORK", "SECURITY", "CCTV"],
+          "mitigation": "Calculate and transmit total heat load (Watts/BTU) for all equipment rooms to HVAC team."
+        },
+        {
+          "rule_id": "D5-004",
+          "check": "Cable tray routing clash potential",
+          "trigger_keywords": ["cable tray", "conduit", "routing", "separation", "clearance", "EMI"],
+          "trigger_condition": "Telecom cable routing specified but no minimum clearance from power cables stated",
+          "default_probability": 2,
+          "default_impact": 3,
+          "applicable_subsystems": ["CABLING"],
+          "mitigation": "Specify minimum 300-500mm clearance between telecom and power cable trays per EMI requirements."
+        },
+        {
+          "rule_id": "D5-005",
+          "check": "Fire alarm system integration gap",
+          "trigger_keywords": ["fire alarm", "FACP", "fire detection", "fire panel", "ESD"],
+          "trigger_condition": "Security system described but interface with fire alarm control panel not defined",
+          "default_probability": 4,
+          "default_impact": 5,
+          "applicable_subsystems": ["ACS", "SECURITY"],
+          "mitigation": "Define FACP interface for ACS fail-safe lock release and PAGA alarm zone activation."
+        },
+        {
+          "rule_id": "D5-006",
+          "check": "Integration with existing plant systems undefined",
+          "trigger_keywords": ["existing", "integrate", "tie-in", "interface", "legacy", "current system"],
+          "trigger_condition": "Spec mentions integration with existing systems but no interface protocol/method specified",
+          "default_probability": 3,
+          "default_impact": 4,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Define integration protocol, physical interface points, and commissioning sequence for existing systems."
+        },
+        {
+          "rule_id": "D5-007",
+          "check": "Underground routing coordination missing",
+          "trigger_keywords": ["underground", "buried", "trench", "duct bank", "direct burial"],
+          "trigger_condition": "Underground cabling specified but no coordination with civil/piping for trench routing",
+          "default_probability": 2,
+          "default_impact": 3,
+          "applicable_subsystems": ["CABLING", "FIBER"],
+          "mitigation": "Coordinate underground telecom routes with civil duct bank design and piping layout."
+        }
+      ]
+    },
+    "D6_COMMERCIAL_SCHEDULE": {
+      "name": "Commercial & Schedule",
+      "description": "Risks related to pricing, lead times, warranty, training, and schedule that affect bid competitiveness and execution.",
+      "rules": [
+        {
+          "rule_id": "D6-001",
+          "check": "Long-lead items not identified",
+          "trigger_keywords": ["lead time", "long-lead", "custom", "explosion-proof", "special order"],
+          "trigger_condition": "Custom or explosion-proof equipment specified without lead time consideration",
+          "default_probability": 3,
+          "default_impact": 4,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Identify all ATEX/IECEx-certified and custom-engineered items as long-lead; flag for early ordering."
+        },
+        {
+          "rule_id": "D6-002",
+          "check": "Training scope undefined or insufficient",
+          "trigger_keywords": ["training", "familiarization", "instruction", "classroom"],
+          "trigger_condition": "System requires operator training but training plan is vague or duration not specified",
+          "default_probability": 2,
+          "default_impact": 2,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Define training scope: duration, location, number of attendees, curriculum, and certification."
+        },
+        {
+          "rule_id": "D6-003",
+          "check": "Warranty terms ambiguous",
+          "trigger_keywords": ["warranty", "guarantee", "defect liability"],
+          "trigger_condition": "No clear warranty period, coverage scope, or start date defined",
+          "default_probability": 2,
+          "default_impact": 3,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Specify warranty period (min 12 months from startup or 18 months from shipping) per MR terms."
+        },
+        {
+          "rule_id": "D6-004",
+          "check": "Site supervision requirements unclear",
+          "trigger_keywords": ["site supervision", "per diem", "field engineer", "commissioning engineer"],
+          "trigger_condition": "Installation/commissioning scope mentions supervision but days/rate not defined",
+          "default_probability": 2,
+          "default_impact": 3,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Specify site supervision duration (man-days) and quote per diem rate in bid."
+        },
+        {
+          "rule_id": "D6-005",
+          "check": "Phased delivery not addressed",
+          "trigger_keywords": ["phased", "priority", "milestone", "partial delivery", "sequence"],
+          "trigger_condition": "Large system scope without delivery phasing or prioritization strategy",
+          "default_probability": 2,
+          "default_impact": 3,
+          "applicable_subsystems": ["ALL"],
+          "mitigation": "Define delivery milestones aligned with construction completion sequence."
+        },
+        {
+          "rule_id": "D6-006",
+          "check": "Software licensing model unclear",
+          "trigger_keywords": ["license", "software", "subscription", "perpetual", "annual"],
+          "trigger_condition": "System requires software but licensing model (perpetual vs subscription) not specified",
+          "default_probability": 3,
+          "default_impact": 3,
+          "applicable_subsystems": ["ACS", "CCTV", "DATA_NETWORK"],
+          "mitigation": "Clarify software licensing model and include lifecycle cost (5-10 years) in bid evaluation."
+        }
+      ]
+    }
+  }
+}
