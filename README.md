@@ -45,6 +45,7 @@
 - **Orthographic Mode**: Restrict drawing segments to horizontal or vertical axes (F8 lock) for precise pathways.
 - **CAD-like Controls**: Dynamic zooming, panning, snap-to-points, node removal, and keyboard shortcuts.
 - **Robust Import/Export**: Save and load complete project states (JSON), share material configurations (JSON), export procurement-ready CSV sheets, and download marked-up layouts as PNGs or PDFs.
+- **Standalone System Calculators**: Includes `system_calculators.html`, an advanced module for computing CCTV Storage (TB), Network Bandwidth (Mbps), and UPS/Battery Bank Sizing (Ah).
 
 ---
 
@@ -195,11 +196,21 @@ $$HFOV = 2 \cdot \arctan\left(\frac{W}{2 \cdot f}\right) \cdot \frac{180}{\pi}$$
 
 ## Developer & File Structure
 
-```
+```text
 TELE/
 ├── takeoff_tool.html         # Main application file (all markup, styles, and script logic)
+├── system_calculators.html   # Standalone CCTV Storage, Bandwidth, and UPS Sizing calculators
 ├── README.md                 # System user guide and specifications
 ├── annotate_pdf.py           # Backend PDF markup processor
 ├── bom_vendor_comparison.py  # Excel utility comparing bills of materials against vendor quotes
 └── extracted_project_content.txt # Source project specification notes
 ```
+
+---
+
+## Revision History
+
+| Revision | Date | Description |
+|----------|------|-------------|
+| **Rev A** | June 2026 | Initial creation of the standalone Material Takeoff tool. |
+| **Rev B** | June 2026 | Added Properties panel for post-placement symbol editing. Implemented JVSG-compliant 3D CCTV Coverage calculations (Target Distance, Height, Auto-Tilt, DORI Pythagorean adjustments). Added standalone System Calculators module (`system_calculators.html`) for Storage and UPS sizing. |
