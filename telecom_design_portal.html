@@ -2061,11 +2061,10 @@
                   <thead>
                     <tr>
                       <th style="width: 12%;">Source</th>
+                      <th style="width: 15%;">Catalog No.</th>
                       <th style="width: 12%;">Item No.</th>
-                      <th style="width: 32%;">Material</th>
+                      <th style="width: 44%;">Material</th>
                       <th style="width: 9%;">Unit</th>
-                      <th style="width: 11%;">Template Qty</th>
-                      <th style="width: 16%;">Area Split</th>
                       <th style="width: 8%;">Action</th>
                     </tr>
                   </thead>
@@ -2073,7 +2072,7 @@
                 </table>
               </div>
               <div class="boq-detail-box" id="boq-catalog-detail">
-                Select a material to send it into the BOQ datasheet. Template quantities are taken from the source workbook area matrix.
+                Select a material to add it to the BOQ datasheet.
               </div>
             </section>
 
@@ -2182,13 +2181,13 @@
         <textarea class="notes-textarea" id="drawer-item-desc" style="height: 60px;"></textarea>
       </div>
       
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;" id="drawer-unit-qty-row">
         <div class="input-group">
           <label class="input-label" for="drawer-item-unit">Unit</label>
           <input class="text-input" type="text" id="drawer-item-unit">
         </div>
-        <div class="input-group">
-          <label class="input-label" for="drawer-item-qty">Template Qty</label>
+        <div class="input-group" id="drawer-qty-group">
+          <label class="input-label" id="drawer-qty-label" for="drawer-item-qty">Template Qty</label>
           <input class="text-input" type="number" id="drawer-item-qty" step="any">
         </div>
       </div>
@@ -3150,11 +3149,12 @@
 
       const rows = visibleBoqCatalog.slice(0, 120);
       if (rows.length === 0) {
-        body.innerHTML = '<tr><td colspan="7"><div class="empty-state">No materials match the current filters.</div></td></tr>';
+        body.innerHTML = '<tr><td colspan="6"><div class="empty-state">No materials match the current filters.</div></td></tr>';
       } else {
         body.innerHTML = rows.map(material => `
           <tr class="${catalogEdits[material.id] ? 'edited-db-row' : ''}">
             <td><span class="boq-pill">${escapeHtml(material.source)}</span></td>
+            <td style="font-family: var(--font-mono, monospace); font-size: 11px; font-weight: 600; color: var(--text-secondary);">${escapeHtml(material.id)}</td>
             <td>${escapeHtml(material.itemNo)}</td>
             <td>
               <div class="boq-item-main" style="display: flex; align-items: center; gap: 8px;">
@@ -3171,8 +3171,6 @@
               <div class="boq-item-sub">${escapeHtml(material.description || material.subsystem || material.system)}</div>
             </td>
             <td>${escapeHtml(material.unit)}</td>
-            <td>${formatQty(material.templateQty)}</td>
-            <td>${escapeHtml(material.areaSummary || 'No area split')}</td>
             <td>
               <button class="icon-btn" type="button" onclick="addMaterialToBoq('${material.id}')" title="Add material to BOQ datasheet">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
@@ -3191,7 +3189,7 @@
       if (detail) {
         detail.textContent = visibleBoqCatalog.length > rows.length
           ? `Showing the first ${rows.length} filtered materials. Narrow search or source filters to reduce the list.`
-          : 'Template quantities are normalized from the source workbook area matrix into selectable BOQ material rows.';
+          : 'Materials in the catalog can be customized and selected to build the BOQ project takeoff.';
       }
     }
 
@@ -3300,15 +3298,24 @@
       let item = null;
       let isCustom = false;
       
+      const qtyGroup = document.getElementById('drawer-qty-group');
+      const qtyLabel = document.getElementById('drawer-qty-label');
+      const unitQtyRow = document.getElementById('drawer-unit-qty-row');
+
       if (boqLineUid) {
         item = boqLines.find(line => line.uid === boqLineUid);
         document.getElementById('drawer-title').textContent = "BOQ Line Specifications";
         document.getElementById('drawer-btn-delete').style.display = 'none';
+        if (qtyGroup) qtyGroup.style.display = 'block';
+        if (qtyLabel) qtyLabel.textContent = 'Quantity';
+        if (unitQtyRow) unitQtyRow.style.gridTemplateColumns = '1fr 1fr';
       } else if (materialId) {
         item = getBoqMaterial(materialId);
         document.getElementById('drawer-title').textContent = "Material Database Editor";
         isCustom = customCatalogItems.some(c => c.id === materialId);
         document.getElementById('drawer-btn-delete').style.display = isCustom ? 'block' : 'none';
+        if (qtyGroup) qtyGroup.style.display = 'none';
+        if (unitQtyRow) unitQtyRow.style.gridTemplateColumns = '1fr';
       }
       
       if (!item) {
@@ -3337,13 +3344,13 @@
       drawerCustomFields = Array.isArray(item.customFields) ? JSON.parse(JSON.stringify(item.customFields)) : [];
       renderDrawerCustomFields();
       
-      document.getElementById('drawer-backdrop').classList.add('active');
-      document.getElementById('database-drawer').classList.add('active');
+      document.getElementById('drawer-backdrop').classList.add('open');
+      document.getElementById('database-drawer').classList.add('open');
     }
 
     function closeMaterialDrawer() {
-      document.getElementById('drawer-backdrop').classList.remove('active');
-      document.getElementById('database-drawer').classList.remove('active');
+      document.getElementById('drawer-backdrop').classList.remove('open');
+      document.getElementById('database-drawer').classList.remove('open');
       activeDrawerMaterialId = null;
       activeDrawerBoqLineUid = null;
       drawerCustomFields = [];
